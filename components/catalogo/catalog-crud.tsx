@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,35 +10,28 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  upsertModelo, deleteModelo, type ModeloRow,
+  upsertTecido, deleteTecido, type TecidoRow,
+  upsertAtributo, deleteAtributo, type AtributoRow,
+} from "@/app/actions/catalogo";
+
+// ─── Re-export types for external use ────────────────────────────────────────
+
+export type ModelItem = { id: string; nome: string; descricao: string; ativo: boolean; atributos: string[] };
+export type TecidoItem = { id: string; nome: string; descricaoSensorial: string; imagemUrl: string; ativo: boolean };
+export type AtributoCategory = "Gola" | "Manga" | "Punho" | "Escudo" | "Acabamento" | "Outro";
+export type AtributoItem = { id: string; categoria: AtributoCategory; nome: string; descricao: string; imagemUrl: string; ativo: boolean };
 
 // ─── Modelos ─────────────────────────────────────────────────────────────────
 
-export type ModelItem = {
-  id: string;
-  nome: string;
-  descricao: string;
-  ativo: boolean;
-  atributos: string[];
-};
-
-const initialModels: ModelItem[] = [
-  { id: "1", nome: "Polo Feminina", descricao: "Camisa polo corte feminino", ativo: true, atributos: ["Gola", "Manga", "Escudo"] },
-  { id: "2", nome: "Polo Masculina", descricao: "Camisa polo corte masculino", ativo: true, atributos: ["Gola", "Manga"] },
-  { id: "3", nome: "Regata Premium", descricao: "Regata com tecido premium", ativo: true, atributos: ["Acabamento"] },
-  { id: "4", nome: "Camiseta Básica", descricao: "Camiseta de algodão básica", ativo: false, atributos: [] },
-];
+function rowToModel(r: ModeloRow): ModelItem {
+  return { id: r.id, nome: r.nome, descricao: r.descricao ?? "", ativo: r.ativo, atributos: r.atributos ?? [] };
+}
 
 function ModelDialog({
-  open,
-  onClose,
-  onSave,
-  initial,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onSave: (m: Omit<ModelItem, "id">) => void;
-  initial?: ModelItem;
-}) {
+  open, onClose, onSave, initial,
+}: { open: boolean; onClose: () => void; onSave: (m: Omit<ModelItem, "id">) => void; initial?: ModelItem }) {
   const [nome, setNome] = useState(initial?.nome ?? "");
   const [descricao, setDescricao] = useState(initial?.descricao ?? "");
   const [ativo, setAtivo] = useState(initial?.ativo ?? true);
@@ -46,8 +39,7 @@ function ModelDialog({
 
   async function handleSave() {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 300)); // TODO: replace with Supabase upsert
-    onSave({ nome, descricao, ativo, atributos: initial?.atributos ?? [] });
+    await onSave({ nome, descricao, ativo, atributos: initial?.atributos ?? [] });
     setSaving(false);
     onClose();
   }
@@ -75,7 +67,7 @@ function ModelDialog({
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} className="cursor-pointer">Cancelar</Button>
           <Button onClick={handleSave} disabled={!nome || saving} className="cursor-pointer">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
             Salvar
           </Button>
         </DialogFooter>
@@ -84,33 +76,36 @@ function ModelDialog({
   );
 }
 
-export function ModelosCrud() {
-  const [items, setItems] = useState(initialModels);
+export function ModelosCrud({ initialModelos }: { initialModelos: ModeloRow[] }) {
+  const [items, setItems] = useState<ModelItem[]>(initialModelos.map(rowToModel));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ModelItem | undefined>();
+  const [, startTransition] = useTransition();
 
   function openNew() { setEditing(undefined); setDialogOpen(true); }
   function openEdit(m: ModelItem) { setEditing(m); setDialogOpen(true); }
 
-  function handleSave(data: Omit<ModelItem, "id">) {
-    if (editing) {
-      setItems((prev) => prev.map((i) => (i.id === editing.id ? { ...i, ...data } : i)));
+  async function handleSave(data: Omit<ModelItem, "id">) {
+    const id = editing?.id;
+    const row = { id, nome: data.nome, descricao: data.descricao, ativo: data.ativo, atributos: data.atributos };
+    if (id) {
+      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...data } : i)));
     } else {
-      setItems((prev) => [...prev, { ...data, id: crypto.randomUUID() }]);
+      const tempId = crypto.randomUUID();
+      setItems((prev) => [...prev, { ...data, id: tempId }]);
     }
+    startTransition(() => { upsertModelo(row); });
   }
 
-  function toggleAtivo(id: string) {
-    setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, ativo: !i.ativo } : i))
-    );
-    // TODO: UPDATE modelos SET ativo = !ativo WHERE id = id
+  function toggleAtivo(item: ModelItem) {
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, ativo: !i.ativo } : i)));
+    startTransition(() => { upsertModelo({ id: item.id, nome: item.nome, descricao: item.descricao, ativo: !item.ativo, atributos: item.atributos }); });
   }
 
   function remove(id: string) {
     if (!confirm("Remover este modelo?")) return;
     setItems((prev) => prev.filter((i) => i.id !== id));
-    // TODO: DELETE FROM modelos WHERE id = id
+    startTransition(() => { deleteModelo(id); });
   }
 
   return (
@@ -137,7 +132,7 @@ export function ModelosCrud() {
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{item.descricao}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <Switch checked={item.ativo} onCheckedChange={() => toggleAtivo(item.id)} />
+                    <Switch checked={item.ativo} onCheckedChange={() => toggleAtivo(item)} />
                     <span className={cn("text-xs", item.ativo ? "text-emerald-400" : "text-muted-foreground")}>
                       {item.ativo ? "Ativo" : "Inativo"}
                     </span>
@@ -155,6 +150,13 @@ export function ModelosCrud() {
                 </td>
               </tr>
             ))}
+            {items.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">
+                  Nenhum modelo cadastrado.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -165,26 +167,17 @@ export function ModelosCrud() {
 
 // ─── Tecidos ─────────────────────────────────────────────────────────────────
 
-export type TecidoItem = {
-  id: string;
-  nome: string;
-  descricaoSensorial: string;
-  imagemUrl: string;
-  ativo: boolean;
-};
+function rowToTecido(r: TecidoRow): TecidoItem {
+  return { id: r.id, nome: r.nome, descricaoSensorial: r.descricao_sensorial ?? "", imagemUrl: r.imagem_url ?? "", ativo: r.ativo };
+}
 
-const initialTecidos: TecidoItem[] = [
-  { id: "1", nome: "Malha PV", descricaoSensorial: "Macio, levemente encorpado, não amare", imagemUrl: "", ativo: true },
-  { id: "2", nome: "Piquet", descricaoSensorial: "Textura quadriculada, firme e respirável", imagemUrl: "", ativo: true },
-  { id: "3", nome: "Dry Fit", descricaoSensorial: "Leve, fresco, seca rápido", imagemUrl: "", ativo: true },
-];
-
-export function TecidosCrud() {
-  const [items, setItems] = useState(initialTecidos);
+export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] }) {
+  const [items, setItems] = useState<TecidoItem[]>(initialTecidos.map(rowToTecido));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TecidoItem | undefined>();
   const [form, setForm] = useState({ nome: "", descricaoSensorial: "", imagemUrl: "", ativo: true });
   const [saving, setSaving] = useState(false);
+  const [, startTransition] = useTransition();
 
   function openNew() {
     setEditing(undefined);
@@ -199,12 +192,13 @@ export function TecidosCrud() {
 
   async function handleSave() {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 300)); // TODO: Supabase upsert tecidos
+    const row = { id: editing?.id, nome: form.nome, descricao_sensorial: form.descricaoSensorial, imagem_url: form.imagemUrl || null, ativo: form.ativo };
     if (editing) {
       setItems((prev) => prev.map((i) => (i.id === editing.id ? { ...i, ...form } : i)));
     } else {
       setItems((prev) => [...prev, { ...form, id: crypto.randomUUID() }]);
     }
+    startTransition(() => { upsertTecido(row); });
     setSaving(false);
     setDialogOpen(false);
   }
@@ -212,6 +206,7 @@ export function TecidosCrud() {
   function remove(id: string) {
     if (!confirm("Remover este tecido?")) return;
     setItems((prev) => prev.filter((i) => i.id !== id));
+    startTransition(() => { deleteTecido(id); });
   }
 
   return (
@@ -253,6 +248,13 @@ export function TecidosCrud() {
                 </td>
               </tr>
             ))}
+            {items.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">
+                  Nenhum tecido cadastrado.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -282,7 +284,7 @@ export function TecidosCrud() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setDialogOpen(false)} className="cursor-pointer">Cancelar</Button>
             <Button onClick={handleSave} disabled={!form.nome || saving} className="cursor-pointer">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Salvar
             </Button>
           </DialogFooter>
@@ -294,33 +296,20 @@ export function TecidosCrud() {
 
 // ─── Atributos ────────────────────────────────────────────────────────────────
 
-export type AtributoCategory = "Gola" | "Manga" | "Punho" | "Escudo" | "Acabamento" | "Outro";
-export type AtributoItem = {
-  id: string;
-  categoria: AtributoCategory;
-  nome: string;
-  descricao: string;
-  imagemUrl: string;
-  ativo: boolean;
-};
-
 const atributoCategories: AtributoCategory[] = ["Gola", "Manga", "Punho", "Escudo", "Acabamento", "Outro"];
 
-const initialAtributos: AtributoItem[] = [
-  { id: "1", categoria: "Gola", nome: "Gola Polo", descricao: "Gola polo tradicional com botões", imagemUrl: "", ativo: true },
-  { id: "2", categoria: "Gola", nome: "Gola Careca", descricao: "Gola redonda sem botões", imagemUrl: "", ativo: true },
-  { id: "3", categoria: "Manga", nome: "Manga Curta", descricao: "Manga curta padrão", imagemUrl: "", ativo: true },
-  { id: "4", categoria: "Escudo", nome: "Escudo Bordado", descricao: "Bordado no peito esquerdo", imagemUrl: "", ativo: true },
-  { id: "5", categoria: "Acabamento", nome: "Barra Reta", descricao: "Barra reta sem elastico", imagemUrl: "", ativo: true },
-];
+function rowToAtributo(r: AtributoRow): AtributoItem {
+  return { id: r.id, categoria: r.categoria as AtributoCategory, nome: r.nome, descricao: r.descricao ?? "", imagemUrl: r.imagem_url ?? "", ativo: r.ativo };
+}
 
-export function AtributosCrud() {
-  const [items, setItems] = useState(initialAtributos);
+export function AtributosCrud({ initialAtributos }: { initialAtributos: AtributoRow[] }) {
+  const [items, setItems] = useState<AtributoItem[]>(initialAtributos.map(rowToAtributo));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AtributoItem | undefined>();
   const [form, setForm] = useState<Omit<AtributoItem, "id">>({ categoria: "Gola", nome: "", descricao: "", imagemUrl: "", ativo: true });
   const [saving, setSaving] = useState(false);
   const [activeCategory, setActiveCategory] = useState<AtributoCategory | "all">("all");
+  const [, startTransition] = useTransition();
 
   const filtered = activeCategory === "all" ? items : items.filter((i) => i.categoria === activeCategory);
 
@@ -337,12 +326,13 @@ export function AtributosCrud() {
 
   async function handleSave() {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 300)); // TODO: Supabase upsert atributos
+    const row = { id: editing?.id, categoria: form.categoria, nome: form.nome, descricao: form.descricao, imagem_url: form.imagemUrl || null, ativo: form.ativo };
     if (editing) {
       setItems((prev) => prev.map((i) => (i.id === editing.id ? { ...i, ...form } : i)));
     } else {
       setItems((prev) => [...prev, { ...form, id: crypto.randomUUID() }]);
     }
+    startTransition(() => { upsertAtributo(row); });
     setSaving(false);
     setDialogOpen(false);
   }
@@ -350,6 +340,7 @@ export function AtributosCrud() {
   function remove(id: string) {
     if (!confirm("Remover este atributo?")) return;
     setItems((prev) => prev.filter((i) => i.id !== id));
+    startTransition(() => { deleteAtributo(id); });
   }
 
   return (
@@ -409,6 +400,13 @@ export function AtributosCrud() {
                 </td>
               </tr>
             ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">
+                  Nenhum atributo encontrado.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -449,7 +447,7 @@ export function AtributosCrud() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setDialogOpen(false)} className="cursor-pointer">Cancelar</Button>
             <Button onClick={handleSave} disabled={!form.nome || saving} className="cursor-pointer">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Salvar
             </Button>
           </DialogFooter>

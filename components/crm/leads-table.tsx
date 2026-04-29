@@ -1,54 +1,76 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { KanbanStatus, Lead } from "./kanban-board";
+import type { KanbanStatus } from "./kanban-board";
+import {
+  updateLeadStatus,
+  updateLeadModelo,
+  updateLeadValor,
+  updateLeadObservacoes,
+  type LeadRow,
+} from "@/app/actions/leads";
 
 const statusLabels: Record<KanbanStatus, string> = {
-  em_atendimento: "Em atendimento",
-  handoff_feito: "Handoff feito",
-  pedido_confirmado: "Pedido confirmado",
-  sem_resposta: "Sem resposta",
-  perdido: "Perdido",
+  em_atendimento:  "Em atendimento",
+  montando_pedido: "Montando pedido",
+  pedido_fechado:  "Pedido fechado",
+  venda_concluida: "Venda concluída",
+  sem_resposta:    "Sem resposta",
+  perdido:         "Perdido",
 };
 
 const statusColors: Record<KanbanStatus, string> = {
-  em_atendimento: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-  handoff_feito: "bg-indigo-500/15 text-indigo-400 border-indigo-500/20",
-  pedido_confirmado: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-  sem_resposta: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
-  perdido: "bg-red-500/15 text-red-400 border-red-500/20",
+  em_atendimento:  "bg-blue-500/15 text-blue-400 border-blue-500/20",
+  montando_pedido: "bg-indigo-500/15 text-indigo-400 border-indigo-500/20",
+  pedido_fechado:  "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+  venda_concluida: "bg-teal-500/15 text-teal-400 border-teal-500/20",
+  sem_resposta:    "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
+  perdido:         "bg-red-500/15 text-red-400 border-red-500/20",
 };
 
-type ExtendedLead = Lead & {
+type DisplayLead = {
+  id: string;
+  name: string;
   contact: string;
   entryDate: Date;
+  model: string;
+  status: KanbanStatus;
+  lastContact: Date;
   orderValue: string;
   notes: string;
 };
 
-const mockLeads: ExtendedLead[] = [
-  { id: "1", name: "Ana Souza", contact: "(11) 99999-1111", entryDate: new Date(2025, 3, 10), model: "Polo Feminina", status: "em_atendimento", lastContact: new Date(2025, 3, 22), orderValue: "", notes: "" },
-  { id: "2", name: "Bruno Lima", contact: "(11) 98888-2222", entryDate: new Date(2025, 3, 12), model: "Regata Premium", status: "em_atendimento", lastContact: new Date(2025, 3, 21), orderValue: "", notes: "Cliente VIP" },
-  { id: "3", name: "Carla Dias", contact: "(21) 97777-3333", entryDate: new Date(2025, 3, 8), model: "Camiseta Básica", status: "handoff_feito", lastContact: new Date(2025, 3, 20), orderValue: "R$ 1.800", notes: "" },
-  { id: "4", name: "Diego Melo", contact: "(31) 96666-4444", entryDate: new Date(2025, 3, 5), model: "Polo Masculina", status: "pedido_confirmado", lastContact: new Date(2025, 3, 19), orderValue: "R$ 2.400", notes: "Pagamento confirmado" },
-  { id: "5", name: "Eva Torres", contact: "(41) 95555-5555", entryDate: new Date(2025, 3, 14), model: "Camiseta Dry Fit", status: "sem_resposta", lastContact: new Date(2025, 3, 18), orderValue: "", notes: "" },
-  { id: "6", name: "Felipe Neto", contact: "(51) 94444-6666", entryDate: new Date(2025, 3, 2), model: "Polo Feminina", status: "perdido", lastContact: new Date(2025, 3, 17), orderValue: "", notes: "Não tem interesse" },
-  { id: "7", name: "Gabi Alves", contact: "(61) 93333-7777", entryDate: new Date(2025, 3, 16), model: "Regata Premium", status: "em_atendimento", lastContact: new Date(2025, 3, 22), orderValue: "", notes: "" },
-];
+function rowToDisplay(row: LeadRow): DisplayLead {
+  return {
+    id: row.id,
+    name: row.nome,
+    contact: row.telefone ?? "",
+    entryDate: new Date(row.created_at),
+    model: row.modelo ?? "",
+    status: row.status as KanbanStatus,
+    lastContact: new Date(row.ultima_interacao),
+    orderValue: row.valor != null ? String(row.valor) : "",
+    notes: row.observacoes ?? "",
+  };
+}
 
-export function LeadsTable() {
-  const [leads, setLeads] = useState(mockLeads);
+export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
+  const [leads, setLeads] = useState<DisplayLead[]>(initialLeads.map(rowToDisplay));
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterModel, setFilterModel] = useState<string>("all");
+  const [, startTransition] = useTransition();
 
-  const models = useMemo(() => Array.from(new Set(mockLeads.map((l) => l.model))), []);
+  const models = useMemo(
+    () => Array.from(new Set(leads.map((l) => l.model).filter(Boolean))),
+    [leads]
+  );
 
   const filtered = useMemo(
     () =>
@@ -61,16 +83,31 @@ export function LeadsTable() {
     [leads, search, filterStatus, filterModel]
   );
 
-  function updateLead(id: string, field: keyof ExtendedLead, value: string) {
-    setLeads((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, [field]: value } : l))
-    );
-    // TODO: persist to Supabase: UPDATE leads SET field = value WHERE id = id
+  function updateLocal(id: string, patch: Partial<DisplayLead>) {
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+  }
+
+  function handleStatusChange(id: string, value: string) {
+    updateLocal(id, { status: value as KanbanStatus });
+    startTransition(() => { updateLeadStatus(id, value); });
+  }
+
+  function handleModeloChange(id: string, value: string) {
+    updateLocal(id, { model: value });
+    startTransition(() => { updateLeadModelo(id, value); });
+  }
+
+  function handleValorBlur(id: string, raw: string) {
+    const num = parseFloat(raw.replace(/[^\d.,]/g, "").replace(",", "."));
+    startTransition(() => { updateLeadValor(id, isNaN(num) ? null : num); });
+  }
+
+  function handleObservacoesBlur(id: string, value: string) {
+    startTransition(() => { updateLeadObservacoes(id, value); });
   }
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -105,7 +142,6 @@ export function LeadsTable() {
         </Select>
       </div>
 
-      {/* Table */}
       <div className="rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -128,11 +164,19 @@ export function LeadsTable() {
                   <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                     {format(lead.entryDate, "dd/MM/yyyy", { locale: ptBR })}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{lead.model}</td>
+                  <td className="px-4 py-3">
+                    <Input
+                      value={lead.model}
+                      onChange={(e) => updateLocal(lead.id, { model: e.target.value })}
+                      onBlur={(e) => handleModeloChange(lead.id, e.target.value)}
+                      placeholder="Modelo..."
+                      className="h-7 text-xs bg-muted border-border w-36"
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <Select
                       value={lead.status}
-                      onValueChange={(v) => v && updateLead(lead.id, "status", v)}
+                      onValueChange={(v) => v && handleStatusChange(lead.id, v)}
                     >
                       <SelectTrigger className={cn("h-7 text-xs w-44 border cursor-pointer", statusColors[lead.status])}>
                         <SelectValue />
@@ -149,7 +193,8 @@ export function LeadsTable() {
                   <td className="px-4 py-3">
                     <Input
                       value={lead.orderValue}
-                      onChange={(e) => updateLead(lead.id, "orderValue", e.target.value)}
+                      onChange={(e) => updateLocal(lead.id, { orderValue: e.target.value })}
+                      onBlur={(e) => handleValorBlur(lead.id, e.target.value)}
                       placeholder="R$ 0,00"
                       className="h-7 text-xs bg-muted border-border w-32"
                     />
@@ -157,7 +202,8 @@ export function LeadsTable() {
                   <td className="px-4 py-3">
                     <Input
                       value={lead.notes}
-                      onChange={(e) => updateLead(lead.id, "notes", e.target.value)}
+                      onChange={(e) => updateLocal(lead.id, { notes: e.target.value })}
+                      onBlur={(e) => handleObservacoesBlur(lead.id, e.target.value)}
                       placeholder="Observações..."
                       className="h-7 text-xs bg-muted border-border"
                     />
