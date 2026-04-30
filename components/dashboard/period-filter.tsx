@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,36 +25,22 @@ function getRange(preset: Preset, custom?: DateRange): Period {
     case "Hoje":
       return { label: "Hoje", from: startOfDay(now), to: endOfDay(now) };
     case "Esta semana":
-      return {
-        label: "Esta semana",
-        from: startOfWeek(now, { locale: ptBR }),
-        to: endOfWeek(now, { locale: ptBR }),
-      };
+      return { label: "Esta semana", from: startOfWeek(now, { locale: ptBR }), to: endOfWeek(now, { locale: ptBR }) };
     case "Este mês":
       return { label: "Este mês", from: startOfMonth(now), to: endOfMonth(now) };
     case "Personalizado":
-      return {
-        label: "Personalizado",
-        from: custom?.from ?? startOfDay(now),
-        to: custom?.to ?? endOfDay(now),
-      };
+      return { label: "Personalizado", from: custom?.from ?? startOfDay(now), to: custom?.to ?? endOfDay(now) };
   }
 }
 
-export function PeriodFilter({
-  onChange,
-}: {
-  onChange?: (period: Period) => void;
-}) {
+export function PeriodFilter({ onChange }: { onChange?: (period: Period) => void }) {
   const [active, setActive] = useState<Preset>("Este mês");
   const [customRange, setCustomRange] = useState<DateRange | undefined>();
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   function select(preset: Preset) {
     setActive(preset);
-    if (preset !== "Personalizado") {
-      onChange?.(getRange(preset));
-    }
+    if (preset !== "Personalizado") onChange?.(getRange(preset));
   }
 
   function applyCustom() {
@@ -65,29 +51,38 @@ export function PeriodFilter({
   }
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div
+      className="flex items-center gap-1 p-1 rounded-[12px]"
+      style={{
+        background: "rgba(5, 150, 105, 0.06)",
+        border: "1px solid rgba(5, 150, 105, 0.18)",
+      }}
+    >
       {presets.map((p) =>
         p === "Personalizado" ? (
           <Popover key={p} open={popoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger
               render={
-                <Button
-                  variant={active === p ? "default" : "outline"}
-                  size="sm"
-                  className={cn(
-                    "gap-2 cursor-pointer",
-                    active !== p && "border-border text-muted-foreground hover:text-foreground"
-                  )}
+                <button
                   onClick={() => select(p)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] text-sm font-medium transition-all duration-180 cursor-pointer",
+                    active !== p && "text-muted-foreground hover:text-foreground"
+                  )}
+                  style={
+                    active === p
+                      ? { background: "#059669", color: "#fff", boxShadow: "0 0 14px rgba(5,150,105,0.4)" }
+                      : undefined
+                  }
                 >
                   <CalendarIcon className="w-3.5 h-3.5" />
                   {active === p && customRange?.from && customRange?.to
                     ? `${format(customRange.from, "dd/MM")} – ${format(customRange.to, "dd/MM")}`
                     : "Personalizado"}
-                </Button>
+                </button>
               }
             />
-            <PopoverContent className="w-auto p-3 bg-card border-border" align="start">
+            <PopoverContent className="w-auto p-3 bg-popover border-border" align="end">
               <Calendar
                 mode="range"
                 selected={customRange}
@@ -106,18 +101,21 @@ export function PeriodFilter({
             </PopoverContent>
           </Popover>
         ) : (
-          <Button
+          <button
             key={p}
-            variant={active === p ? "default" : "outline"}
-            size="sm"
-            className={cn(
-              "cursor-pointer",
-              active !== p && "border-border text-muted-foreground hover:text-foreground"
-            )}
             onClick={() => select(p)}
+            className={cn(
+              "px-3 py-1.5 rounded-[9px] text-sm font-medium transition-all duration-180 cursor-pointer",
+              active !== p && "text-muted-foreground hover:text-foreground"
+            )}
+            style={
+              active === p
+                ? { background: "#059669", color: "#fff", boxShadow: "0 0 14px rgba(5,150,105,0.4)" }
+                : undefined
+            }
           >
             {p}
-          </Button>
+          </button>
         )
       )}
     </div>

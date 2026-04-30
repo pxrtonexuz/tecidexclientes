@@ -16,42 +16,58 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
   const isNeutral = change === 0;
 
   return (
-    <div className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3">
-      <div className="flex items-start justify-between">
-        <p className="text-sm text-muted-foreground font-medium">{title}</p>
+    <div className="glass-card p-5 flex flex-col gap-3">
+      <div className="flex items-start justify-between relative z-[1]">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground leading-tight">
+          {title}
+        </p>
         {icon && (
-          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground shrink-0"
+            style={{ background: "rgba(5, 150, 105, 0.12)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
+          >
             {icon}
           </div>
         )}
       </div>
-      <div className="flex items-end justify-between gap-2">
+
+      <div className="flex items-end justify-between gap-2 relative z-[1]">
         <div>
           <span
             className={cn(
-              "text-2xl font-bold",
+              "text-2xl font-bold tracking-tight",
               highlight === "success" && "text-emerald-400",
               highlight === "danger" && "text-destructive",
-              highlight === "neutral" && "text-foreground",
               !highlight && "text-foreground"
             )}
+            style={
+              highlight === "success"
+                ? { textShadow: "0 0 12px rgba(16, 220, 140, 0.4)" }
+                : undefined
+            }
           >
             {value}
           </span>
-          {suffix && (
-            <span className="ml-1 text-sm text-muted-foreground">{suffix}</span>
-          )}
+          {suffix && <span className="ml-1 text-sm text-muted-foreground">{suffix}</span>}
         </div>
+
         {hasChange && (
           <div
             className={cn(
-              "flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md",
+              "flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full",
               isNeutral
-                ? "bg-muted text-muted-foreground"
+                ? "text-muted-foreground"
                 : isPositive
-                ? "bg-emerald-500/10 text-emerald-400"
-                : "bg-destructive/10 text-destructive"
+                ? "text-emerald-400"
+                : "text-red-400"
             )}
+            style={
+              isNeutral
+                ? { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }
+                : isPositive
+                ? { background: "rgba(16, 220, 140, 0.12)", border: "1px solid rgba(16, 220, 140, 0.25)" }
+                : { background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.25)" }
+            }
           >
             {isNeutral ? (
               <Minus className="w-3 h-3" />
@@ -60,7 +76,7 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
             ) : (
               <TrendingDown className="w-3 h-3" />
             )}
-            {Math.abs(change)}%
+            {Math.abs(change ?? 0)}%
           </div>
         )}
       </div>

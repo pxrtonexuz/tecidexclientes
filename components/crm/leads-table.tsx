@@ -25,14 +25,16 @@ const statusLabels: Record<KanbanStatus, string> = {
   perdido:         "Perdido",
 };
 
-const statusColors: Record<KanbanStatus, string> = {
-  em_atendimento:  "bg-blue-500/15 text-blue-400 border-blue-500/20",
-  montando_pedido: "bg-indigo-500/15 text-indigo-400 border-indigo-500/20",
-  pedido_fechado:  "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-  venda_concluida: "bg-teal-500/15 text-teal-400 border-teal-500/20",
-  sem_resposta:    "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
-  perdido:         "bg-red-500/15 text-red-400 border-red-500/20",
+/* Glass pill styles for status badges */
+const statusStyles: Record<KanbanStatus, React.CSSProperties> = {
+  em_atendimento:  { background: "rgba(56, 189, 248, 0.12)", border: "1px solid rgba(56, 189, 248, 0.25)", color: "#38bdf8" },
+  montando_pedido: { background: "rgba(129, 140, 248, 0.12)", border: "1px solid rgba(129, 140, 248, 0.25)", color: "#818cf8" },
+  pedido_fechado:  { background: "rgba(16, 220, 140, 0.12)", border: "1px solid rgba(16, 220, 140, 0.28)", color: "#10dc8c" },
+  venda_concluida: { background: "rgba(16, 220, 140, 0.15)", border: "1px solid rgba(16, 220, 140, 0.35)", color: "#10dc8c" },
+  sem_resposta:    { background: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(245, 158, 11, 0.25)", color: "#f59e0b" },
+  perdido:         { background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.25)", color: "#ef4444" },
 };
+
 
 type DisplayLead = {
   id: string;
@@ -108,6 +110,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
 
   return (
     <div className="space-y-4">
+      {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -115,14 +118,21 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
             placeholder="Buscar por nome..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-muted border-border"
+            className="pl-9"
+            style={{
+              background: "rgba(5, 150, 105, 0.06)",
+              border: "1px solid rgba(5, 150, 105, 0.20)",
+            }}
           />
         </div>
         <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v ?? "all")}>
-          <SelectTrigger className="w-48 bg-muted border-border cursor-pointer">
+          <SelectTrigger
+            className="w-48 cursor-pointer"
+            style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
+          >
             <SelectValue placeholder="Status" />
           </SelectTrigger>
-          <SelectContent className="bg-card border-border">
+          <SelectContent className="bg-popover border-border">
             <SelectItem value="all" className="cursor-pointer">Todos os status</SelectItem>
             {(Object.keys(statusLabels) as KanbanStatus[]).map((s) => (
               <SelectItem key={s} value={s} className="cursor-pointer">{statusLabels[s]}</SelectItem>
@@ -130,10 +140,13 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
           </SelectContent>
         </Select>
         <Select value={filterModel} onValueChange={(v) => setFilterModel(v ?? "all")}>
-          <SelectTrigger className="w-48 bg-muted border-border cursor-pointer">
+          <SelectTrigger
+            className="w-48 cursor-pointer"
+            style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
+          >
             <SelectValue placeholder="Modelo" />
           </SelectTrigger>
-          <SelectContent className="bg-card border-border">
+          <SelectContent className="bg-popover border-border">
             <SelectItem value="all" className="cursor-pointer">Todos os modelos</SelectItem>
             {models.map((m) => (
               <SelectItem key={m} value={m} className="cursor-pointer">{m}</SelectItem>
@@ -142,23 +155,56 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
         </Select>
       </div>
 
-      <div className="rounded-xl border border-border overflow-hidden">
+      {/* Table */}
+      <div
+        className="rounded-[22px] overflow-hidden"
+        style={{
+          background: "rgba(5, 150, 105, 0.05)",
+          backdropFilter: "blur(28px) saturate(160%)",
+          WebkitBackdropFilter: "blur(28px) saturate(160%)",
+          border: "1px solid rgba(5, 150, 105, 0.20)",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(16, 220, 140, 0.06)",
+        }}
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-muted/50 border-b border-border">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">Nome</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">Contato</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">Entrada</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">Modelo</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">Valor do Pedido</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap min-w-48">Observações</th>
+              <tr
+                style={{
+                  background: "rgba(5, 150, 105, 0.08)",
+                  borderBottom: "1px solid rgba(5, 150, 105, 0.18)",
+                }}
+              >
+                {["Nome", "Contato", "Entrada", "Modelo", "Status", "Valor do Pedido", "Observações"].map((h) => (
+                  <th
+                    key={h}
+                    className="text-left px-4 py-3 whitespace-nowrap"
+                    style={{
+                      color: "rgba(160, 210, 185, 0.65)",
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      letterSpacing: "0.07em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {filtered.map((lead) => (
-                <tr key={lead.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                <tr
+                  key={lead.id}
+                  className="last:border-0 transition-colors duration-150"
+                  style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.08)" }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLTableRowElement).style.background = "rgba(5, 150, 105, 0.06)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLTableRowElement).style.background = "transparent";
+                  }}
+                >
                   <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{lead.name}</td>
                   <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{lead.contact}</td>
                   <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
@@ -170,7 +216,8 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                       onChange={(e) => updateLocal(lead.id, { model: e.target.value })}
                       onBlur={(e) => handleModeloChange(lead.id, e.target.value)}
                       placeholder="Modelo..."
-                      className="h-7 text-xs bg-muted border-border w-36"
+                      className="h-7 text-xs w-36"
+                      style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
                     />
                   </td>
                   <td className="px-4 py-3">
@@ -178,10 +225,18 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                       value={lead.status}
                       onValueChange={(v) => v && handleStatusChange(lead.id, v)}
                     >
-                      <SelectTrigger className={cn("h-7 text-xs w-44 border cursor-pointer", statusColors[lead.status])}>
+                      <SelectTrigger
+                        className={cn("h-7 text-xs w-44 cursor-pointer border-0")}
+                        style={{
+                          ...statusStyles[lead.status],
+                          borderRadius: "50px",
+                          padding: "4px 12px",
+                          backdropFilter: "blur(8px)",
+                        }}
+                      >
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
+                      <SelectContent className="bg-popover border-border">
                         {(Object.keys(statusLabels) as KanbanStatus[]).map((s) => (
                           <SelectItem key={s} value={s} className="text-xs cursor-pointer">
                             {statusLabels[s]}
@@ -196,7 +251,8 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                       onChange={(e) => updateLocal(lead.id, { orderValue: e.target.value })}
                       onBlur={(e) => handleValorBlur(lead.id, e.target.value)}
                       placeholder="R$ 0,00"
-                      className="h-7 text-xs bg-muted border-border w-32"
+                      className="h-7 text-xs w-32"
+                      style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
                     />
                   </td>
                   <td className="px-4 py-3">
@@ -205,7 +261,8 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                       onChange={(e) => updateLocal(lead.id, { notes: e.target.value })}
                       onBlur={(e) => handleObservacoesBlur(lead.id, e.target.value)}
                       placeholder="Observações..."
-                      className="h-7 text-xs bg-muted border-border"
+                      className="h-7 text-xs"
+                      style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
                     />
                   </td>
                 </tr>

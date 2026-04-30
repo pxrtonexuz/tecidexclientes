@@ -6,11 +6,11 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { tenant } = await requireTenantSession();
+  const { tenant, user } = await requireTenantSession();
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar companyName={tenant.company_name} />
+      <Sidebar companyName={tenant.company_name} userEmail={user.email ?? ""} />
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -16,7 +17,6 @@ import {
   LogOut,
   ChevronDown,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type NavItem = {
@@ -64,48 +64,52 @@ const navItems: NavItem[] = [
   },
 ];
 
-function NavSection({
-  item,
-  collapsed,
-  pathname,
-}: {
-  item: NavItem;
-  collapsed: boolean;
-  pathname: string;
-}) {
+
+const navItemBase =
+  "flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm font-medium transition-all duration-180 cursor-pointer";
+
+function NavSection({ item, collapsed, pathname }: { item: NavItem; collapsed: boolean; pathname: string }) {
   const isActive = item.href
     ? pathname === item.href
     : item.children?.some((c) => pathname.startsWith(c.href)) ?? false;
 
   const [open, setOpen] = useState(isActive);
 
+  const activeStyle: React.CSSProperties = {
+    background: "rgba(5, 150, 105, 0.14)",
+    border: "1px solid rgba(5, 150, 105, 0.28)",
+    boxShadow: "0 2px 12px rgba(5, 150, 105, 0.18), inset 0 1px 0 rgba(16, 220, 140, 0.15)",
+    color: "#10dc8c",
+  };
+
   if (item.href) {
     const Icon = item.icon;
-    const linkClass = cn(
-      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer",
-      "hover:bg-accent hover:text-accent-foreground",
-      isActive ? "bg-primary/15 text-primary" : "text-muted-foreground"
-    );
     if (collapsed) {
       return (
         <TooltipProvider delay={0}>
           <Tooltip>
             <TooltipTrigger
               render={
-                <Link href={item.href} className={linkClass}>
+                <Link
+                  href={item.href}
+                  className={cn(navItemBase, !isActive && "text-muted-foreground hover:text-foreground hover:bg-muted/50")}
+                  style={isActive ? activeStyle : undefined}
+                >
                   <Icon className="w-5 h-5 shrink-0" />
                 </Link>
               }
             />
-            <TooltipContent side="right">
-              <p>{item.label}</p>
-            </TooltipContent>
+            <TooltipContent side="right"><p>{item.label}</p></TooltipContent>
           </Tooltip>
         </TooltipProvider>
       );
     }
     return (
-      <Link href={item.href} className={linkClass}>
+      <Link
+        href={item.href}
+        className={cn(navItemBase, !isActive && "text-muted-foreground hover:text-foreground hover:bg-muted/50")}
+        style={isActive ? activeStyle : undefined}
+      >
         <Icon className="w-5 h-5 shrink-0" />
         <span>{item.label}</span>
       </Link>
@@ -115,24 +119,17 @@ function NavSection({
   const Icon = item.icon;
 
   if (collapsed) {
-    const divClass = cn(
-      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-colors",
-      "hover:bg-accent hover:text-accent-foreground",
-      isActive ? "text-primary" : "text-muted-foreground"
-    );
     return (
       <TooltipProvider delay={0}>
         <Tooltip>
           <TooltipTrigger
             render={
-              <div className={divClass}>
+              <div className={cn(navItemBase, "text-muted-foreground hover:text-foreground hover:bg-muted/50", isActive && "text-[#10dc8c]")}>
                 <Icon className="w-5 h-5 shrink-0" />
               </div>
             }
           />
-          <TooltipContent side="right">
-            <p>{item.label}</p>
-          </TooltipContent>
+          <TooltipContent side="right"><p>{item.label}</p></TooltipContent>
         </Tooltip>
       </TooltipProvider>
     );
@@ -143,46 +140,44 @@ function NavSection({
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          "w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-colors",
-          "hover:bg-accent hover:text-accent-foreground",
-          isActive ? "text-primary" : "text-muted-foreground"
+          navItemBase,
+          "w-full justify-between",
+          isActive ? "text-[#10dc8c]" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
         )}
       >
         <div className="flex items-center gap-3">
           <Icon className="w-5 h-5 shrink-0" />
           <span>{item.label}</span>
         </div>
-        <ChevronDown
-          className={cn(
-            "w-4 h-4 transition-transform duration-200",
-            open && "rotate-180"
-          )}
-        />
+        <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", open && "rotate-180")} />
       </button>
       {open && (
-        <div className="mt-1 ml-8 space-y-1">
-          {item.children?.map((child) => (
-            <Link
-              key={child.href}
-              href={child.href}
-              className={cn(
-                "block px-3 py-2 rounded-md text-sm cursor-pointer transition-colors",
-                "hover:bg-accent hover:text-accent-foreground",
-                pathname === child.href
-                  ? "text-primary font-medium"
-                  : "text-muted-foreground"
-              )}
-            >
-              {child.label}
-            </Link>
-          ))}
+        <div className="mt-1 ml-8 space-y-0.5">
+          {item.children?.map((child) => {
+            const childActive = pathname === child.href;
+            return (
+              <Link
+                key={child.href}
+                href={child.href}
+                className={cn(
+                  "block px-3 py-2 rounded-[8px] text-sm cursor-pointer transition-all duration-180",
+                  childActive
+                    ? "font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+                style={childActive ? { color: "#10dc8c", background: "rgba(5,150,105,0.1)" } : undefined}
+              >
+                {child.label}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-export function Sidebar({ companyName }: { companyName?: string }) {
+export function Sidebar({ companyName, userEmail }: { companyName?: string; userEmail?: string }) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -197,89 +192,116 @@ export function Sidebar({ companyName }: { companyName?: string }) {
   return (
     <aside
       className={cn(
-        "relative flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
+        "relative flex flex-col h-screen transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
+      style={{
+        background: "rgba(5, 12, 8, 0.82)",
+        backdropFilter: "blur(56px) saturate(180%)",
+        WebkitBackdropFilter: "blur(56px) saturate(180%)",
+        borderRight: "1px solid rgba(5, 150, 105, 0.20)",
+        boxShadow: "4px 0 32px rgba(0, 0, 0, 0.4), inset -1px 0 0 rgba(5, 150, 105, 0.08)",
+      }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-sidebar-border">
-        {!collapsed && (
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center shrink-0">
-              <span className="text-primary-foreground font-bold text-xs">T</span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground leading-tight truncate">
-                {companyName ?? "Tecidex"}
-              </p>
-              <p className="text-xs text-muted-foreground">Nexuz AI</p>
-            </div>
-          </div>
-        )}
-        {collapsed && (
-          <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center mx-auto">
-            <span className="text-primary-foreground font-bold text-xs">T</span>
-          </div>
+      {/* Header — Tecidex logo */}
+      <div
+        className="flex items-center justify-center px-4 py-5"
+        style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.15)" }}
+      >
+        {!collapsed ? (
+          <Image
+            src="/LogoTecidexPlataforma.png"
+            alt="Tecidex"
+            width={150}
+            height={52}
+            className="object-contain"
+          />
+        ) : (
+          <Image
+            src="/LogoTecidexPlataforma.png"
+            alt="Tecidex"
+            width={36}
+            height={36}
+            className="object-contain"
+          />
         )}
       </div>
 
       {/* Toggle button */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-16 z-10 w-6 h-6 rounded-full bg-sidebar-border border border-sidebar-border flex items-center justify-center cursor-pointer hover:bg-accent transition-colors"
+        className="absolute -right-3 top-16 z-10 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all duration-180 hover:scale-110"
+        style={{
+          background: "rgba(5, 12, 8, 0.9)",
+          border: "1px solid rgba(5, 150, 105, 0.30)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+        }}
         aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
       >
-        {collapsed ? (
-          <ChevronRight className="w-3 h-3 text-muted-foreground" />
-        ) : (
-          <ChevronLeft className="w-3 h-3 text-muted-foreground" />
-        )}
+        {collapsed
+          ? <ChevronRight className="w-3 h-3 text-muted-foreground" />
+          : <ChevronLeft className="w-3 h-3 text-muted-foreground" />}
       </button>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
         {navItems.map((item) => (
-          <NavSection
-            key={item.label}
-            item={item}
-            collapsed={collapsed}
-            pathname={pathname}
-          />
+          <NavSection key={item.label} item={item} collapsed={collapsed} pathname={pathname} />
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="px-2 py-3 border-t border-sidebar-border">
+      {/* Footer — User section */}
+      <div className="px-3 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid rgba(5, 150, 105, 0.15)" }}>
         {collapsed ? (
           <TooltipProvider delay={0}>
             <Tooltip>
               <TooltipTrigger
                 render={
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
                     onClick={handleLogout}
-                    className="w-full justify-center px-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                    className="w-full flex items-center justify-center p-2 rounded-[10px] text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer transition-all duration-180"
                   >
                     <LogOut className="w-4 h-4 shrink-0" />
-                  </Button>
+                  </button>
                 }
               />
-              <TooltipContent side="right">
-                <p>Sair</p>
-              </TooltipContent>
+              <TooltipContent side="right"><p>Sair</p></TooltipContent>
             </Tooltip>
           </TooltipProvider>
         ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground cursor-pointer"
-          >
-            <LogOut className="w-4 h-4 shrink-0" />
-            <span className="text-sm">Sair</span>
-          </Button>
+          <>
+            {/* User info row */}
+            <div className="flex items-center gap-3">
+              {/* Avatar */}
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-sm font-semibold"
+                style={{
+                  background: "rgba(5, 150, 105, 0.20)",
+                  border: "1px solid rgba(16, 220, 140, 0.28)",
+                  color: "#10dc8c",
+                }}
+              >
+                {(companyName ?? userEmail ?? "U").charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate leading-tight">
+                  {companyName ?? "Usuário"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate leading-tight mt-0.5">
+                  Admin
+                </p>
+              </div>
+            </div>
+
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer transition-colors duration-180"
+            >
+              <LogOut className="w-4 h-4 shrink-0" />
+              <span>Sair</span>
+            </button>
+          </>
         )}
       </div>
     </aside>
