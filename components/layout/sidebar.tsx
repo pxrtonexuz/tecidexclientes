@@ -212,16 +212,16 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
           <Image
             src="/LogoTecidexPlataforma.png"
             alt="Tecidex"
-            width={150}
-            height={52}
+            width={110}
+            height={36}
             className="object-contain"
           />
         ) : (
           <Image
             src="/LogoTecidexPlataforma.png"
             alt="Tecidex"
-            width={36}
-            height={36}
+            width={28}
+            height={28}
             className="object-contain"
           />
         )}
