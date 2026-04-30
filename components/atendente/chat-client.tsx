@@ -141,20 +141,32 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
     return Date.now() - conv.pausedAt.getTime() >= 2 * 60 * 60 * 1000;
   }
 
+  const glassPanel: React.CSSProperties = {
+    background: "rgba(5, 150, 105, 0.06)",
+    backdropFilter: "blur(28px) saturate(160%)",
+    WebkitBackdropFilter: "blur(28px) saturate(160%)",
+    border: "1px solid rgba(5, 150, 105, 0.22)",
+    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+  };
+
   if (conversas.length === 0) {
     return (
-      <div className="flex h-[calc(100vh-12rem)] items-center justify-center rounded-xl border border-border text-muted-foreground">
+      <div className="flex h-[calc(100vh-12rem)] items-center justify-center rounded-[22px] text-muted-foreground"
+        style={glassPanel}>
         Nenhuma conversa encontrada.
       </div>
     );
   }
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] gap-0 rounded-xl border border-border overflow-hidden">
+    <div className="flex h-[calc(100vh-12rem)] gap-0 rounded-[22px] overflow-hidden"
+      style={glassPanel}>
       {/* Sidebar */}
-      <div className="w-72 shrink-0 flex flex-col border-r border-border bg-card">
+      <div className="w-72 shrink-0 flex flex-col"
+        style={{ borderRight: "1px solid rgba(5, 150, 105, 0.18)", background: "rgba(5, 150, 105, 0.04)" }}>
         {/* Status realtime */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
+        <div className="flex items-center justify-between px-4 py-2"
+          style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.15)", background: "rgba(5, 150, 105, 0.06)" }}>
           <span className="text-xs text-muted-foreground">{conversas.length} conversas</span>
           <div className="flex items-center gap-1.5">
             <Wifi className={cn("w-3 h-3", realtimeOk ? "text-emerald-400" : "text-muted-foreground")} />
@@ -165,17 +177,16 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
         </div>
 
         {/* Filter tabs */}
-        <div className="flex border-b border-border p-2 gap-1">
+        <div className="flex p-2 gap-1" style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.15)" }}>
           {(["all", "ativa", "pausada", "concluida"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
               className={cn(
-                "flex-1 text-xs py-1.5 rounded-md font-medium cursor-pointer transition-colors",
-                filter === f
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                "flex-1 text-xs py-1.5 rounded-[8px] font-medium cursor-pointer transition-all duration-180",
+                filter === f ? "text-white" : "text-muted-foreground hover:text-foreground"
               )}
+              style={filter === f ? { background: "#059669", boxShadow: "0 0 10px rgba(5,150,105,0.4)" } : undefined}
             >
               {f === "all" ? "Todas" : f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
@@ -189,10 +200,21 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
               key={conv.session_id}
               onClick={() => setActiveId(conv.session_id)}
               className={cn(
-                "w-full text-left px-4 py-3 border-b border-border cursor-pointer transition-colors hover:bg-muted/50",
-                activeId === conv.session_id && "bg-muted/70",
+                "w-full text-left px-4 py-3 cursor-pointer transition-colors",
                 isLongPaused(conv) && "border-l-2 border-l-yellow-500"
               )}
+              style={{
+                borderBottom: "1px solid rgba(5, 150, 105, 0.10)",
+                background: activeId === conv.session_id ? "rgba(5, 150, 105, 0.12)" : undefined,
+              }}
+              onMouseEnter={(e) => {
+                if (activeId !== conv.session_id)
+                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(5, 150, 105, 0.07)";
+              }}
+              onMouseLeave={(e) => {
+                if (activeId !== conv.session_id)
+                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+              }}
             >
               <div className="flex items-center justify-between gap-2 mb-1">
                 <span className="text-sm font-medium text-foreground truncate">{conv.clientName}</span>
@@ -218,7 +240,8 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
       {/* Chat area */}
       {active ? (
         <div className="flex-1 flex flex-col">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card">
+          <div className="flex items-center justify-between px-5 py-3"
+            style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.15)", background: "rgba(5, 150, 105, 0.04)" }}>
             <div>
               <p className="font-semibold text-foreground">{active.clientName}</p>
               <Badge className={cn("text-xs border", statusColors[active.status])}>
@@ -263,12 +286,12 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
                       : <Bot className="w-4 h-4 text-primary" />}
                   </div>
                   <div className={cn("max-w-xs lg:max-w-md", msg.from === "agente" && "items-end flex flex-col")}>
-                    <div className={cn(
-                      "rounded-2xl px-4 py-2.5 text-sm",
-                      msg.from === "cliente"
-                        ? "bg-muted text-foreground rounded-tl-sm"
-                        : "bg-primary text-primary-foreground rounded-tr-sm"
-                    )}>
+                    <div
+                      className="px-4 py-2.5 text-sm"
+                      style={msg.from === "cliente"
+                        ? { background: "rgba(5, 150, 105, 0.10)", border: "1px solid rgba(5, 150, 105, 0.20)", color: "var(--foreground)", borderRadius: "18px 18px 18px 4px" }
+                        : { background: "#059669", color: "#fff", borderRadius: "18px 18px 4px 18px" }}
+                    >
                       {msg.text}
                     </div>
                   </div>

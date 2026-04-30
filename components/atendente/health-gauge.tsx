@@ -76,7 +76,13 @@ export function HealthGauge({ score, components }: { score: number; components: 
   const status = score <= 40 ? { label: "Crítico", color: "text-red-400" } : score <= 70 ? { label: "Atenção", color: "text-yellow-400" } : { label: "Saudável", color: "text-emerald-400" };
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 space-y-6">
+    <div className="p-6 rounded-[22px] space-y-6" style={{
+      background: "rgba(5, 150, 105, 0.06)",
+      backdropFilter: "blur(28px) saturate(160%)",
+      WebkitBackdropFilter: "blur(28px) saturate(160%)",
+      border: "1px solid rgba(5, 150, 105, 0.22)",
+      boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+    }}>
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Termômetro de Saúde</h3>
       <div className="flex flex-col sm:flex-row items-center gap-8">
         <div className="flex flex-col items-center gap-2">

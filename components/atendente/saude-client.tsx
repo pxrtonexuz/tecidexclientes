@@ -39,7 +39,13 @@ export function SaudeClient({ initialConfig }: { initialConfig: AgentConfigRow |
 
   return (
     <div className="space-y-6">
-      <div className="bg-card border border-border rounded-xl p-6">
+      <div className="p-6 rounded-[22px]" style={{
+        background: "rgba(5, 150, 105, 0.06)",
+        backdropFilter: "blur(28px) saturate(160%)",
+        WebkitBackdropFilter: "blur(28px) saturate(160%)",
+        border: "1px solid rgba(5, 150, 105, 0.22)",
+        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+      }}>
         <div className="flex items-start gap-4 flex-wrap">
           <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
             <Bot className="w-8 h-8 text-primary" />
