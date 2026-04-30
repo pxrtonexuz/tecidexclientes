@@ -64,7 +64,7 @@ function ConfirmDeleteDialog({
           </div>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          Remover <span className="text-foreground font-medium">"{label}"</span>? Esta ação não pode ser desfeita.
+          Remover <span className="text-foreground font-medium">&quot;{label}&quot;</span>? Esta ação não pode ser desfeita.
         </p>
         <DialogFooter>
           <Button variant="ghost" onClick={onCancel} className="cursor-pointer">Cancelar</Button>
