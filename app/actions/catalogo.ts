@@ -4,6 +4,8 @@ import { requireTenantSession } from "@/lib/auth";
 import { createTenantClient } from "@/lib/supabase/tenant";
 import { revalidatePath } from "next/cache";
 
+type ActionResult = { error?: string };
+
 // ─── Modelos ─────────────────────────────────────────────────────────────────
 
 export type ModeloRow = {
@@ -25,22 +27,22 @@ export async function getModelos(): Promise<ModeloRow[]> {
   return data as ModeloRow[];
 }
 
-export async function upsertModelo(data: Omit<ModeloRow, "id"> & { id?: string }) {
+export async function upsertModelo(data: Omit<ModeloRow, "id"> & { id?: string }): Promise<ActionResult> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
-  if (data.id) {
-    await db.from("modelos").update(data).eq("id", data.id);
-  } else {
-    await db.from("modelos").insert(data);
-  }
+  const { error } = data.id
+    ? await db.from("modelos").update(data).eq("id", data.id)
+    : await db.from("modelos").insert(data);
   revalidatePath("/catalogo/modelos");
+  return error ? { error: error.message } : {};
 }
 
-export async function deleteModelo(id: string) {
+export async function deleteModelo(id: string): Promise<ActionResult> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
-  await db.from("modelos").delete().eq("id", id);
+  const { error } = await db.from("modelos").delete().eq("id", id);
   revalidatePath("/catalogo/modelos");
+  return error ? { error: error.message } : {};
 }
 
 // ─── Tecidos ─────────────────────────────────────────────────────────────────
@@ -64,22 +66,22 @@ export async function getTecidos(): Promise<TecidoRow[]> {
   return data as TecidoRow[];
 }
 
-export async function upsertTecido(data: Omit<TecidoRow, "id"> & { id?: string }) {
+export async function upsertTecido(data: Omit<TecidoRow, "id"> & { id?: string }): Promise<ActionResult> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
-  if (data.id) {
-    await db.from("tecidos").update(data).eq("id", data.id);
-  } else {
-    await db.from("tecidos").insert(data);
-  }
+  const { error } = data.id
+    ? await db.from("tecidos").update(data).eq("id", data.id)
+    : await db.from("tecidos").insert(data);
   revalidatePath("/catalogo/tecidos");
+  return error ? { error: error.message } : {};
 }
 
-export async function deleteTecido(id: string) {
+export async function deleteTecido(id: string): Promise<ActionResult> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
-  await db.from("tecidos").delete().eq("id", id);
+  const { error } = await db.from("tecidos").delete().eq("id", id);
   revalidatePath("/catalogo/tecidos");
+  return error ? { error: error.message } : {};
 }
 
 // ─── Atributos ───────────────────────────────────────────────────────────────
@@ -104,20 +106,20 @@ export async function getAtributos(): Promise<AtributoRow[]> {
   return data as AtributoRow[];
 }
 
-export async function upsertAtributo(data: Omit<AtributoRow, "id"> & { id?: string }) {
+export async function upsertAtributo(data: Omit<AtributoRow, "id"> & { id?: string }): Promise<ActionResult> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
-  if (data.id) {
-    await db.from("atributos").update(data).eq("id", data.id);
-  } else {
-    await db.from("atributos").insert(data);
-  }
+  const { error } = data.id
+    ? await db.from("atributos").update(data).eq("id", data.id)
+    : await db.from("atributos").insert(data);
   revalidatePath("/catalogo/atributos");
+  return error ? { error: error.message } : {};
 }
 
-export async function deleteAtributo(id: string) {
+export async function deleteAtributo(id: string): Promise<ActionResult> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
-  await db.from("atributos").delete().eq("id", id);
+  const { error } = await db.from("atributos").delete().eq("id", id);
   revalidatePath("/catalogo/atributos");
+  return error ? { error: error.message } : {};
 }

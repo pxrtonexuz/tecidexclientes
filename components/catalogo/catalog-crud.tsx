@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   upsertModelo, deleteModelo, type ModeloRow,
@@ -16,12 +17,68 @@ import {
   upsertAtributo, deleteAtributo, type AtributoRow,
 } from "@/app/actions/catalogo";
 
-// ─── Re-export types for external use ────────────────────────────────────────
-
 export type ModelItem = { id: string; nome: string; descricao: string; ativo: boolean; atributos: string[] };
 export type TecidoItem = { id: string; nome: string; descricaoSensorial: string; imagemUrl: string; ativo: boolean };
 export type AtributoCategory = "Gola" | "Manga" | "Punho" | "Escudo" | "Acabamento" | "Outro";
 export type AtributoItem = { id: string; categoria: AtributoCategory; nome: string; descricao: string; imagemUrl: string; ativo: boolean };
+
+// ─── Shared glass styles ──────────────────────────────────────────────────────
+
+const glassTable: React.CSSProperties = {
+  background: "rgba(5, 150, 105, 0.05)",
+  backdropFilter: "blur(28px) saturate(160%)",
+  WebkitBackdropFilter: "blur(28px) saturate(160%)",
+  border: "1px solid rgba(5, 150, 105, 0.20)",
+  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+};
+
+const glassDialog: React.CSSProperties = {
+  background: "rgba(5, 12, 8, 0.96)",
+  border: "1px solid rgba(5, 150, 105, 0.25)",
+  backdropFilter: "blur(40px)",
+};
+
+const thStyle: React.CSSProperties = {
+  color: "rgba(160, 210, 185, 0.65)",
+  fontSize: "11px",
+  fontWeight: 600,
+  letterSpacing: "0.07em",
+  textTransform: "uppercase",
+};
+
+// ─── Confirm Delete Dialog ────────────────────────────────────────────────────
+
+function ConfirmDeleteDialog({
+  label, open, onConfirm, onCancel,
+}: { label: string; open: boolean; onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <Dialog open={open} onOpenChange={onCancel}>
+      <DialogContent style={glassDialog} className="text-foreground max-w-sm">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.25)" }}>
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+            </div>
+            <DialogTitle>Confirmar exclusão</DialogTitle>
+          </div>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Remover <span className="text-foreground font-medium">"{label}"</span>? Esta ação não pode ser desfeita.
+        </p>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onCancel} className="cursor-pointer">Cancelar</Button>
+          <Button
+            onClick={onConfirm}
+            className="cursor-pointer bg-red-600 hover:bg-red-700 text-white border-0"
+          >
+            Remover
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // ─── Modelos ─────────────────────────────────────────────────────────────────
 
@@ -46,18 +103,21 @@ function ModelDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-card border-border text-foreground">
+      <DialogContent style={glassDialog} className="text-foreground">
         <DialogHeader>
           <DialogTitle>{initial ? "Editar Modelo" : "Novo Modelo"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label>Nome</Label>
-            <Input value={nome} onChange={(e) => setNome(e.target.value)} className="bg-muted border-border" />
+            <Input value={nome} onChange={(e) => setNome(e.target.value)}
+              style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }} />
           </div>
           <div className="space-y-1.5">
             <Label>Descrição</Label>
-            <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} className="bg-muted border-border resize-none" rows={3} />
+            <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)}
+              style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
+              className="resize-none" rows={3} />
           </div>
           <div className="flex items-center gap-3">
             <Switch checked={ativo} onCheckedChange={setAtivo} />
@@ -67,8 +127,7 @@ function ModelDialog({
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} className="cursor-pointer">Cancelar</Button>
           <Button onClick={handleSave} disabled={!nome || saving} className="cursor-pointer">
-            {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-            Salvar
+            {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Salvar
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -80,6 +139,7 @@ export function ModelosCrud({ initialModelos }: { initialModelos: ModeloRow[] })
   const [items, setItems] = useState<ModelItem[]>(initialModelos.map(rowToModel));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ModelItem | undefined>();
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; nome: string } | null>(null);
   const [, startTransition] = useTransition();
 
   function openNew() { setEditing(undefined); setDialogOpen(true); }
@@ -91,10 +151,13 @@ export function ModelosCrud({ initialModelos }: { initialModelos: ModeloRow[] })
     if (id) {
       setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...data } : i)));
     } else {
-      const tempId = crypto.randomUUID();
-      setItems((prev) => [...prev, { ...data, id: tempId }]);
+      setItems((prev) => [...prev, { ...data, id: crypto.randomUUID() }]);
     }
-    startTransition(() => { upsertModelo(row); });
+    startTransition(async () => {
+      const res = await upsertModelo(row);
+      if ((res as { error?: string })?.error) toast.error("Falha ao salvar modelo.");
+      else toast.success(id ? "Modelo atualizado." : "Modelo criado.");
+    });
   }
 
   function toggleAtivo(item: ModelItem) {
@@ -102,32 +165,36 @@ export function ModelosCrud({ initialModelos }: { initialModelos: ModeloRow[] })
     startTransition(() => { upsertModelo({ id: item.id, nome: item.nome, descricao: item.descricao, ativo: !item.ativo, atributos: item.atributos }); });
   }
 
-  function remove(id: string) {
-    if (!confirm("Remover este modelo?")) return;
+  function execDelete(id: string) {
     setItems((prev) => prev.filter((i) => i.id !== id));
-    startTransition(() => { deleteModelo(id); });
+    startTransition(async () => {
+      const res = await deleteModelo(id);
+      if ((res as { error?: string })?.error) toast.error("Falha ao remover modelo.");
+      else toast.success("Modelo removido.");
+    });
+    setConfirmDelete(null);
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={openNew} className="gap-2 cursor-pointer">
-          <Plus className="w-4 h-4" /> Novo Modelo
-        </Button>
+        <Button onClick={openNew} className="gap-2 cursor-pointer"><Plus className="w-4 h-4" /> Novo Modelo</Button>
       </div>
-      <div className="rounded-xl border border-border overflow-hidden">
+      <div className="rounded-[22px] overflow-hidden" style={glassTable}>
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-muted/50 border-b border-border">
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nome</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descrição</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Ações</th>
+            <tr style={{ background: "rgba(5, 150, 105, 0.08)", borderBottom: "1px solid rgba(5, 150, 105, 0.18)" }}>
+              {["Nome", "Descrição", "Status", "Ações"].map((h, i) => (
+                <th key={h} className={cn("px-4 py-3", i === 3 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+              <tr key={item.id} className="transition-colors duration-150 last:border-0"
+                style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.08)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(5, 150, 105, 0.06)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}>
                 <td className="px-4 py-3 font-medium text-foreground">{item.nome}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{item.descricao}</td>
                 <td className="px-4 py-3">
@@ -140,27 +207,26 @@ export function ModelosCrud({ initialModelos }: { initialModelos: ModeloRow[] })
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="w-7 h-7 cursor-pointer" onClick={() => openEdit(item)}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="w-7 h-7 text-destructive hover:text-destructive cursor-pointer" onClick={() => remove(item.id)}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    <Button variant="ghost" size="icon" className="w-7 h-7 cursor-pointer" onClick={() => openEdit(item)}><Pencil className="w-3.5 h-3.5" /></Button>
+                    <Button variant="ghost" size="icon" className="w-7 h-7 text-destructive hover:text-destructive cursor-pointer"
+                      onClick={() => setConfirmDelete({ id: item.id, nome: item.nome })}><Trash2 className="w-3.5 h-3.5" /></Button>
                   </div>
                 </td>
               </tr>
             ))}
             {items.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">
-                  Nenhum modelo cadastrado.
-                </td>
-              </tr>
+              <tr><td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">Nenhum modelo cadastrado.</td></tr>
             )}
           </tbody>
         </table>
       </div>
       <ModelDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSave={handleSave} initial={editing} />
+      <ConfirmDeleteDialog
+        label={confirmDelete?.nome ?? ""}
+        open={!!confirmDelete}
+        onConfirm={() => confirmDelete && execDelete(confirmDelete.id)}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }
@@ -177,18 +243,11 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
   const [editing, setEditing] = useState<TecidoItem | undefined>();
   const [form, setForm] = useState({ nome: "", descricaoSensorial: "", imagemUrl: "", ativo: true });
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; nome: string } | null>(null);
   const [, startTransition] = useTransition();
 
-  function openNew() {
-    setEditing(undefined);
-    setForm({ nome: "", descricaoSensorial: "", imagemUrl: "", ativo: true });
-    setDialogOpen(true);
-  }
-  function openEdit(t: TecidoItem) {
-    setEditing(t);
-    setForm({ nome: t.nome, descricaoSensorial: t.descricaoSensorial, imagemUrl: t.imagemUrl, ativo: t.ativo });
-    setDialogOpen(true);
-  }
+  function openNew() { setEditing(undefined); setForm({ nome: "", descricaoSensorial: "", imagemUrl: "", ativo: true }); setDialogOpen(true); }
+  function openEdit(t: TecidoItem) { setEditing(t); setForm({ nome: t.nome, descricaoSensorial: t.descricaoSensorial, imagemUrl: t.imagemUrl, ativo: t.ativo }); setDialogOpen(true); }
 
   async function handleSave() {
     setSaving(true);
@@ -198,37 +257,45 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
     } else {
       setItems((prev) => [...prev, { ...form, id: crypto.randomUUID() }]);
     }
-    startTransition(() => { upsertTecido(row); });
+    startTransition(async () => {
+      const res = await upsertTecido(row);
+      if ((res as { error?: string })?.error) toast.error("Falha ao salvar tecido.");
+      else toast.success(editing ? "Tecido atualizado." : "Tecido criado.");
+    });
     setSaving(false);
     setDialogOpen(false);
   }
 
-  function remove(id: string) {
-    if (!confirm("Remover este tecido?")) return;
+  function execDelete(id: string) {
     setItems((prev) => prev.filter((i) => i.id !== id));
-    startTransition(() => { deleteTecido(id); });
+    startTransition(async () => {
+      const res = await deleteTecido(id);
+      if ((res as { error?: string })?.error) toast.error("Falha ao remover tecido.");
+      else toast.success("Tecido removido.");
+    });
+    setConfirmDelete(null);
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={openNew} className="gap-2 cursor-pointer">
-          <Plus className="w-4 h-4" /> Novo Tecido
-        </Button>
+        <Button onClick={openNew} className="gap-2 cursor-pointer"><Plus className="w-4 h-4" /> Novo Tecido</Button>
       </div>
-      <div className="rounded-xl border border-border overflow-hidden">
+      <div className="rounded-[22px] overflow-hidden" style={glassTable}>
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-muted/50 border-b border-border">
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nome</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descrição sensorial</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Ações</th>
+            <tr style={{ background: "rgba(5, 150, 105, 0.08)", borderBottom: "1px solid rgba(5, 150, 105, 0.18)" }}>
+              {["Nome", "Descrição sensorial", "Status", "Ações"].map((h, i) => (
+                <th key={h} className={cn("px-4 py-3", i === 3 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+              <tr key={item.id} className="transition-colors duration-150 last:border-0"
+                style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.08)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(5, 150, 105, 0.06)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}>
                 <td className="px-4 py-3 font-medium text-foreground">{item.nome}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{item.descricaoSensorial}</td>
                 <td className="px-4 py-3">
@@ -238,43 +305,38 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="w-7 h-7 cursor-pointer" onClick={() => openEdit(item)}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="w-7 h-7 text-destructive hover:text-destructive cursor-pointer" onClick={() => remove(item.id)}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    <Button variant="ghost" size="icon" className="w-7 h-7 cursor-pointer" onClick={() => openEdit(item)}><Pencil className="w-3.5 h-3.5" /></Button>
+                    <Button variant="ghost" size="icon" className="w-7 h-7 text-destructive hover:text-destructive cursor-pointer"
+                      onClick={() => setConfirmDelete({ id: item.id, nome: item.nome })}><Trash2 className="w-3.5 h-3.5" /></Button>
                   </div>
                 </td>
               </tr>
             ))}
             {items.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">
-                  Nenhum tecido cadastrado.
-                </td>
-              </tr>
+              <tr><td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">Nenhum tecido cadastrado.</td></tr>
             )}
           </tbody>
         </table>
       </div>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-card border-border text-foreground">
-          <DialogHeader>
-            <DialogTitle>{editing ? "Editar Tecido" : "Novo Tecido"}</DialogTitle>
-          </DialogHeader>
+        <DialogContent style={glassDialog} className="text-foreground">
+          <DialogHeader><DialogTitle>{editing ? "Editar Tecido" : "Novo Tecido"}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label>Nome</Label>
-              <Input value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} className="bg-muted border-border" />
+              <Input value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
+                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }} />
             </div>
             <div className="space-y-1.5">
               <Label>Descrição sensorial</Label>
-              <Textarea value={form.descricaoSensorial} onChange={(e) => setForm((f) => ({ ...f, descricaoSensorial: e.target.value }))} className="bg-muted border-border resize-none" rows={3} />
+              <Textarea value={form.descricaoSensorial} onChange={(e) => setForm((f) => ({ ...f, descricaoSensorial: e.target.value }))}
+                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
+                className="resize-none" rows={3} />
             </div>
             <div className="space-y-1.5">
               <Label>URL da imagem de referência</Label>
-              <Input value={form.imagemUrl} onChange={(e) => setForm((f) => ({ ...f, imagemUrl: e.target.value }))} placeholder="https://..." className="bg-muted border-border" />
+              <Input value={form.imagemUrl} onChange={(e) => setForm((f) => ({ ...f, imagemUrl: e.target.value }))} placeholder="https://..."
+                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }} />
             </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.ativo} onCheckedChange={(v) => setForm((f) => ({ ...f, ativo: v }))} />
@@ -284,12 +346,17 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
           <DialogFooter>
             <Button variant="ghost" onClick={() => setDialogOpen(false)} className="cursor-pointer">Cancelar</Button>
             <Button onClick={handleSave} disabled={!form.nome || saving} className="cursor-pointer">
-              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Salvar
+              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Salvar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDeleteDialog
+        label={confirmDelete?.nome ?? ""}
+        open={!!confirmDelete}
+        onConfirm={() => confirmDelete && execDelete(confirmDelete.id)}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }
@@ -309,20 +376,13 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
   const [form, setForm] = useState<Omit<AtributoItem, "id">>({ categoria: "Gola", nome: "", descricao: "", imagemUrl: "", ativo: true });
   const [saving, setSaving] = useState(false);
   const [activeCategory, setActiveCategory] = useState<AtributoCategory | "all">("all");
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; nome: string } | null>(null);
   const [, startTransition] = useTransition();
 
   const filtered = activeCategory === "all" ? items : items.filter((i) => i.categoria === activeCategory);
 
-  function openNew() {
-    setEditing(undefined);
-    setForm({ categoria: "Gola", nome: "", descricao: "", imagemUrl: "", ativo: true });
-    setDialogOpen(true);
-  }
-  function openEdit(a: AtributoItem) {
-    setEditing(a);
-    setForm({ categoria: a.categoria, nome: a.nome, descricao: a.descricao, imagemUrl: a.imagemUrl, ativo: a.ativo });
-    setDialogOpen(true);
-  }
+  function openNew() { setEditing(undefined); setForm({ categoria: "Gola", nome: "", descricao: "", imagemUrl: "", ativo: true }); setDialogOpen(true); }
+  function openEdit(a: AtributoItem) { setEditing(a); setForm({ categoria: a.categoria, nome: a.nome, descricao: a.descricao, imagemUrl: a.imagemUrl, ativo: a.ativo }); setDialogOpen(true); }
 
   async function handleSave() {
     setSaving(true);
@@ -332,54 +392,67 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
     } else {
       setItems((prev) => [...prev, { ...form, id: crypto.randomUUID() }]);
     }
-    startTransition(() => { upsertAtributo(row); });
+    startTransition(async () => {
+      const res = await upsertAtributo(row);
+      if ((res as { error?: string })?.error) toast.error("Falha ao salvar atributo.");
+      else toast.success(editing ? "Atributo atualizado." : "Atributo criado.");
+    });
     setSaving(false);
     setDialogOpen(false);
   }
 
-  function remove(id: string) {
-    if (!confirm("Remover este atributo?")) return;
+  function execDelete(id: string) {
     setItems((prev) => prev.filter((i) => i.id !== id));
-    startTransition(() => { deleteAtributo(id); });
+    startTransition(async () => {
+      const res = await deleteAtributo(id);
+      if ((res as { error?: string })?.error) toast.error("Falha ao remover atributo.");
+      else toast.success("Atributo removido.");
+    });
+    setConfirmDelete(null);
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex gap-2 flex-wrap">
+        <div
+          className="flex items-center gap-1 p-1 rounded-[12px] flex-wrap"
+          style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
+        >
           {(["all", ...atributoCategories] as const).map((cat) => (
-            <Button
+            <button
               key={cat}
-              variant={activeCategory === cat ? "default" : "outline"}
-              size="sm"
-              className={cn("cursor-pointer text-xs", activeCategory !== cat && "border-border text-muted-foreground hover:text-foreground")}
               onClick={() => setActiveCategory(cat)}
+              className={cn("px-3 py-1.5 rounded-[9px] text-xs font-medium transition-all duration-180 cursor-pointer",
+                activeCategory !== cat && "text-muted-foreground hover:text-foreground")}
+              style={activeCategory === cat ? { background: "#059669", color: "#fff", boxShadow: "0 0 10px rgba(5,150,105,0.4)" } : undefined}
             >
               {cat === "all" ? "Todos" : cat}
-            </Button>
+            </button>
           ))}
         </div>
-        <Button onClick={openNew} className="gap-2 cursor-pointer">
-          <Plus className="w-4 h-4" /> Novo Atributo
-        </Button>
+        <Button onClick={openNew} className="gap-2 cursor-pointer"><Plus className="w-4 h-4" /> Novo Atributo</Button>
       </div>
 
-      <div className="rounded-xl border border-border overflow-hidden">
+      <div className="rounded-[22px] overflow-hidden" style={glassTable}>
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-muted/50 border-b border-border">
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Categoria</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nome</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descrição</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Ações</th>
+            <tr style={{ background: "rgba(5, 150, 105, 0.08)", borderBottom: "1px solid rgba(5, 150, 105, 0.18)" }}>
+              {["Categoria", "Nome", "Descrição", "Status", "Ações"].map((h, i) => (
+                <th key={h} className={cn("px-4 py-3", i === 4 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {filtered.map((item) => (
-              <tr key={item.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+              <tr key={item.id} className="transition-colors duration-150 last:border-0"
+                style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.08)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(5, 150, 105, 0.06)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}>
                 <td className="px-4 py-3">
-                  <Badge className="bg-primary/15 text-primary border-primary/20 text-xs border">{item.categoria}</Badge>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-medium"
+                    style={{ background: "rgba(5, 150, 105, 0.15)", border: "1px solid rgba(5, 150, 105, 0.25)", color: "#10dc8c" }}>
+                    {item.categoria}
+                  </span>
                 </td>
                 <td className="px-4 py-3 font-medium text-foreground">{item.nome}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{item.descricao}</td>
@@ -390,54 +463,47 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="w-7 h-7 cursor-pointer" onClick={() => openEdit(item)}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="w-7 h-7 text-destructive hover:text-destructive cursor-pointer" onClick={() => remove(item.id)}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    <Button variant="ghost" size="icon" className="w-7 h-7 cursor-pointer" onClick={() => openEdit(item)}><Pencil className="w-3.5 h-3.5" /></Button>
+                    <Button variant="ghost" size="icon" className="w-7 h-7 text-destructive hover:text-destructive cursor-pointer"
+                      onClick={() => setConfirmDelete({ id: item.id, nome: item.nome })}><Trash2 className="w-3.5 h-3.5" /></Button>
                   </div>
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">
-                  Nenhum atributo encontrado.
-                </td>
-              </tr>
+              <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">Nenhum atributo encontrado.</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-card border-border text-foreground">
-          <DialogHeader>
-            <DialogTitle>{editing ? "Editar Atributo" : "Novo Atributo"}</DialogTitle>
-          </DialogHeader>
+        <DialogContent style={glassDialog} className="text-foreground">
+          <DialogHeader><DialogTitle>{editing ? "Editar Atributo" : "Novo Atributo"}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label>Categoria</Label>
-              <select
-                value={form.categoria}
-                onChange={(e) => setForm((f) => ({ ...f, categoria: e.target.value as AtributoCategory }))}
-                className="w-full bg-muted border border-border rounded-md px-3 py-2 text-sm text-foreground cursor-pointer"
-              >
+              <select value={form.categoria} onChange={(e) => setForm((f) => ({ ...f, categoria: e.target.value as AtributoCategory }))}
+                className="w-full rounded-md px-3 py-2 text-sm text-foreground cursor-pointer"
+                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }}>
                 {atributoCategories.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="space-y-1.5">
               <Label>Nome</Label>
-              <Input value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} className="bg-muted border-border" />
+              <Input value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
+                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }} />
             </div>
             <div className="space-y-1.5">
               <Label>Descrição</Label>
-              <Textarea value={form.descricao} onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))} className="bg-muted border-border resize-none" rows={3} />
+              <Textarea value={form.descricao} onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
+                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
+                className="resize-none" rows={3} />
             </div>
             <div className="space-y-1.5">
               <Label>URL da imagem de referência</Label>
-              <Input value={form.imagemUrl} onChange={(e) => setForm((f) => ({ ...f, imagemUrl: e.target.value }))} placeholder="https://..." className="bg-muted border-border" />
+              <Input value={form.imagemUrl} onChange={(e) => setForm((f) => ({ ...f, imagemUrl: e.target.value }))} placeholder="https://..."
+                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }} />
             </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.ativo} onCheckedChange={(v) => setForm((f) => ({ ...f, ativo: v }))} />
@@ -447,12 +513,17 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
           <DialogFooter>
             <Button variant="ghost" onClick={() => setDialogOpen(false)} className="cursor-pointer">Cancelar</Button>
             <Button onClick={handleSave} disabled={!form.nome || saving} className="cursor-pointer">
-              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Salvar
+              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Salvar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDeleteDialog
+        label={confirmDelete?.nome ?? ""}
+        open={!!confirmDelete}
+        onConfirm={() => confirmDelete && execDelete(confirmDelete.id)}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

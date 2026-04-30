@@ -16,6 +16,8 @@ export type LeadRow = {
   created_at: string;
 };
 
+type ActionResult = { error?: string };
+
 export async function getLeads(): Promise<LeadRow[]> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
@@ -27,34 +29,38 @@ export async function getLeads(): Promise<LeadRow[]> {
   return data as LeadRow[];
 }
 
-export async function updateLeadStatus(id: string, status: string) {
+export async function updateLeadStatus(id: string, status: string): Promise<ActionResult> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
-  await db
+  const { error } = await db
     .from("leads")
     .update({ status, ultima_interacao: new Date().toISOString() })
     .eq("id", id);
   revalidatePath("/crm/kanban");
   revalidatePath("/crm/leads");
+  return error ? { error: "Falha ao atualizar status." } : {};
 }
 
-export async function updateLeadModelo(id: string, modelo: string) {
+export async function updateLeadModelo(id: string, modelo: string): Promise<ActionResult> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
-  await db.from("leads").update({ modelo }).eq("id", id);
+  const { error } = await db.from("leads").update({ modelo }).eq("id", id);
   revalidatePath("/crm/leads");
+  return error ? { error: "Falha ao atualizar modelo." } : {};
 }
 
-export async function updateLeadValor(id: string, valor: number | null) {
+export async function updateLeadValor(id: string, valor: number | null): Promise<ActionResult> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
-  await db.from("leads").update({ valor }).eq("id", id);
+  const { error } = await db.from("leads").update({ valor }).eq("id", id);
   revalidatePath("/crm/leads");
+  return error ? { error: "Falha ao atualizar valor." } : {};
 }
 
-export async function updateLeadObservacoes(id: string, observacoes: string) {
+export async function updateLeadObservacoes(id: string, observacoes: string): Promise<ActionResult> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
-  await db.from("leads").update({ observacoes }).eq("id", id);
+  const { error } = await db.from("leads").update({ observacoes }).eq("id", id);
   revalidatePath("/crm/leads");
+  return error ? { error: "Falha ao atualizar observações." } : {};
 }

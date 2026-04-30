@@ -3,9 +3,10 @@
 import { useState, useMemo, useTransition } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { KanbanStatus } from "./kanban-board";
 import {
@@ -16,6 +17,8 @@ import {
   type LeadRow,
 } from "@/app/actions/leads";
 
+const PAGE_SIZE = 15;
+
 const statusLabels: Record<KanbanStatus, string> = {
   em_atendimento:  "Em atendimento",
   montando_pedido: "Montando pedido",
@@ -25,7 +28,6 @@ const statusLabels: Record<KanbanStatus, string> = {
   perdido:         "Perdido",
 };
 
-/* Glass pill styles for status badges */
 const statusStyles: Record<KanbanStatus, React.CSSProperties> = {
   em_atendimento:  { background: "rgba(56, 189, 248, 0.12)", border: "1px solid rgba(56, 189, 248, 0.25)", color: "#38bdf8" },
   montando_pedido: { background: "rgba(129, 140, 248, 0.12)", border: "1px solid rgba(129, 140, 248, 0.25)", color: "#818cf8" },
@@ -34,7 +36,6 @@ const statusStyles: Record<KanbanStatus, React.CSSProperties> = {
   sem_resposta:    { background: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(245, 158, 11, 0.25)", color: "#f59e0b" },
   perdido:         { background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.25)", color: "#ef4444" },
 };
-
 
 type DisplayLead = {
   id: string;
@@ -67,6 +68,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterModel, setFilterModel] = useState<string>("all");
+  const [page, setPage] = useState(1);
   const [, startTransition] = useTransition();
 
   const models = useMemo(
@@ -85,27 +87,48 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
     [leads, search, filterStatus, filterModel]
   );
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Reset to page 1 when filters change
+  function applyFilter(fn: () => void) {
+    fn();
+    setPage(1);
+  }
+
   function updateLocal(id: string, patch: Partial<DisplayLead>) {
     setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
   }
 
   function handleStatusChange(id: string, value: string) {
     updateLocal(id, { status: value as KanbanStatus });
-    startTransition(() => { updateLeadStatus(id, value); });
+    startTransition(async () => {
+      const res = await updateLeadStatus(id, value);
+      if (res.error) toast.error(res.error);
+    });
   }
 
   function handleModeloChange(id: string, value: string) {
     updateLocal(id, { model: value });
-    startTransition(() => { updateLeadModelo(id, value); });
+    startTransition(async () => {
+      const res = await updateLeadModelo(id, value);
+      if (res.error) toast.error(res.error);
+    });
   }
 
   function handleValorBlur(id: string, raw: string) {
     const num = parseFloat(raw.replace(/[^\d.,]/g, "").replace(",", "."));
-    startTransition(() => { updateLeadValor(id, isNaN(num) ? null : num); });
+    startTransition(async () => {
+      const res = await updateLeadValor(id, isNaN(num) ? null : num);
+      if (res.error) toast.error(res.error);
+    });
   }
 
   function handleObservacoesBlur(id: string, value: string) {
-    startTransition(() => { updateLeadObservacoes(id, value); });
+    startTransition(async () => {
+      const res = await updateLeadObservacoes(id, value);
+      if (res.error) toast.error(res.error);
+    });
   }
 
   return (
@@ -117,15 +140,12 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
           <Input
             placeholder="Buscar por nome..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => applyFilter(() => setSearch(e.target.value))}
             className="pl-9"
-            style={{
-              background: "rgba(5, 150, 105, 0.06)",
-              border: "1px solid rgba(5, 150, 105, 0.20)",
-            }}
+            style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
           />
         </div>
-        <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v ?? "all")}>
+        <Select value={filterStatus} onValueChange={(v) => applyFilter(() => setFilterStatus(v ?? "all"))}>
           <SelectTrigger
             className="w-48 cursor-pointer"
             style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
@@ -139,7 +159,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
             ))}
           </SelectContent>
         </Select>
-        <Select value={filterModel} onValueChange={(v) => setFilterModel(v ?? "all")}>
+        <Select value={filterModel} onValueChange={(v) => applyFilter(() => setFilterModel(v ?? "all"))}>
           <SelectTrigger
             className="w-48 cursor-pointer"
             style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
@@ -169,23 +189,12 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr
-                style={{
-                  background: "rgba(5, 150, 105, 0.08)",
-                  borderBottom: "1px solid rgba(5, 150, 105, 0.18)",
-                }}
-              >
+              <tr style={{ background: "rgba(5, 150, 105, 0.08)", borderBottom: "1px solid rgba(5, 150, 105, 0.18)" }}>
                 {["Nome", "Contato", "Entrada", "Modelo", "Status", "Valor do Pedido", "Observações"].map((h) => (
                   <th
                     key={h}
                     className="text-left px-4 py-3 whitespace-nowrap"
-                    style={{
-                      color: "rgba(160, 210, 185, 0.65)",
-                      fontSize: "11px",
-                      fontWeight: 600,
-                      letterSpacing: "0.07em",
-                      textTransform: "uppercase",
-                    }}
+                    style={{ color: "rgba(160, 210, 185, 0.65)", fontSize: "11px", fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase" }}
                   >
                     {h}
                   </th>
@@ -193,17 +202,13 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((lead) => (
+              {paginated.map((lead) => (
                 <tr
                   key={lead.id}
                   className="last:border-0 transition-colors duration-150"
                   style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.08)" }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLTableRowElement).style.background = "rgba(5, 150, 105, 0.06)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLTableRowElement).style.background = "transparent";
-                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(5, 150, 105, 0.06)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}
                 >
                   <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{lead.name}</td>
                   <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{lead.contact}</td>
@@ -221,26 +226,16 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                     />
                   </td>
                   <td className="px-4 py-3">
-                    <Select
-                      value={lead.status}
-                      onValueChange={(v) => v && handleStatusChange(lead.id, v)}
-                    >
+                    <Select value={lead.status} onValueChange={(v) => v && handleStatusChange(lead.id, v)}>
                       <SelectTrigger
                         className={cn("h-7 text-xs w-44 cursor-pointer border-0")}
-                        style={{
-                          ...statusStyles[lead.status],
-                          borderRadius: "50px",
-                          padding: "4px 12px",
-                          backdropFilter: "blur(8px)",
-                        }}
+                        style={{ ...statusStyles[lead.status], borderRadius: "50px", padding: "4px 12px", backdropFilter: "blur(8px)" }}
                       >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border">
                         {(Object.keys(statusLabels) as KanbanStatus[]).map((s) => (
-                          <SelectItem key={s} value={s} className="text-xs cursor-pointer">
-                            {statusLabels[s]}
-                          </SelectItem>
+                          <SelectItem key={s} value={s} className="text-xs cursor-pointer">{statusLabels[s]}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -277,6 +272,53 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div
+            className="flex items-center justify-between px-4 py-3"
+            style={{ borderTop: "1px solid rgba(5, 150, 105, 0.15)" }}
+          >
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} leads · página {page} de {totalPages}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const p = totalPages <= 5 ? i + 1 : page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className="w-7 h-7 rounded-lg text-xs font-medium cursor-pointer transition-all duration-180"
+                    style={
+                      page === p
+                        ? { background: "#059669", color: "#fff", boxShadow: "0 0 10px rgba(5,150,105,0.4)" }
+                        : { background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.18)", color: "var(--muted-foreground)" }
+                    }
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

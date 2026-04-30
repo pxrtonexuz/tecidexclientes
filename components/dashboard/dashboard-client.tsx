@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PeriodFilter, type Period } from "@/components/dashboard/period-filter";
 import { StatCard } from "@/components/dashboard/stat-card";
 import {
@@ -11,6 +11,7 @@ import { MessageSquare, Activity, ShoppingCart, TrendingUp, DollarSign } from "l
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import type { LeadRow } from "@/app/actions/leads";
 
 type ChartMetric = "atendimentos" | "pedidos" | "faturamento";
 
@@ -20,16 +21,14 @@ const metricConfig: Record<ChartMetric, { label: string; prefix?: string }> = {
   faturamento: { label: "Faturamento", prefix: "R$" },
 };
 
+const CLOSED_STATUSES = ["pedido_fechado", "venda_concluida"];
+
 type Props = {
   agentAtivo: boolean;
-  totalLeads: number;
-  pedidosConfirmados: number;
-  faturamento: number;
-  ticketMedio: number;
-  taxaConversao: number;
+  leads: LeadRow[];
 };
 
-export function DashboardClient({ agentAtivo, totalLeads, pedidosConfirmados, faturamento, ticketMedio, taxaConversao }: Props) {
+export function DashboardClient({ agentAtivo, leads }: Props) {
   const [period, setPeriod] = useState<Period>({
     label: "Este mês",
     from: startOfMonth(new Date()),
@@ -39,12 +38,39 @@ export function DashboardClient({ agentAtivo, totalLeads, pedidosConfirmados, fa
 
   const cfg = metricConfig[metric];
 
-  const chartData = eachDayOfInterval({ start: subDays(new Date(), 29), end: new Date() }).map((day, i) => ({
-    date: format(day, "dd/MM", { locale: ptBR }),
-    atendimentos: Math.max(0, Math.round((totalLeads / 30) + (Math.sin(i) * 2))),
-    pedidos: Math.max(0, Math.round((pedidosConfirmados / 30) + (Math.cos(i) * 1))),
-    faturamento: Math.max(0, Math.round((faturamento / 30) + (Math.sin(i + 1) * 500))),
-  }));
+  // Filter leads by selected period
+  const periodLeads = useMemo(
+    () => leads.filter((l) => {
+      const d = new Date(l.created_at);
+      return d >= period.from && d <= period.to;
+    }),
+    [leads, period]
+  );
+
+  const totalLeads = periodLeads.length;
+  const pedidosConfirmados = periodLeads.filter((l) => CLOSED_STATUSES.includes(l.status)).length;
+  const faturamento = periodLeads
+    .filter((l) => CLOSED_STATUSES.includes(l.status) && l.valor)
+    .reduce((acc, l) => acc + (l.valor ?? 0), 0);
+  const ticketMedio = pedidosConfirmados > 0 ? faturamento / pedidosConfirmados : 0;
+  const taxaConversao = totalLeads > 0 ? (pedidosConfirmados / totalLeads) * 100 : 0;
+
+  // Real chart data from last 30 days
+  const chartData = useMemo(() => {
+    const days = eachDayOfInterval({ start: subDays(new Date(), 29), end: new Date() });
+    return days.map((day) => {
+      const dayStr = format(day, "yyyy-MM-dd");
+      const dayLeads = leads.filter((l) => l.created_at.startsWith(dayStr));
+      const dayOrders = dayLeads.filter((l) => CLOSED_STATUSES.includes(l.status));
+      const dayRevenue = dayOrders.reduce((acc, l) => acc + (l.valor ?? 0), 0);
+      return {
+        date: format(day, "dd/MM", { locale: ptBR }),
+        atendimentos: dayLeads.length,
+        pedidos: dayOrders.length,
+        faturamento: dayRevenue,
+      };
+    });
+  }, [leads]);
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
@@ -63,7 +89,6 @@ export function DashboardClient({ agentAtivo, totalLeads, pedidosConfirmados, fa
           Status do Agente
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Agent status card */}
           <div
             className="glass-card p-5 flex items-center gap-4"
             style={{ animationDelay: "0ms" }}
@@ -97,9 +122,7 @@ export function DashboardClient({ agentAtivo, totalLeads, pedidosConfirmados, fa
               className={cn("ml-auto w-2.5 h-2.5 rounded-full shrink-0", agentAtivo && "animate-pulse")}
               style={{
                 background: agentAtivo ? "#10dc8c" : "#ef4444",
-                boxShadow: agentAtivo
-                  ? "0 0 8px #10dc8c, 0 0 20px rgba(16, 220, 140, 0.4)"
-                  : "none",
+                boxShadow: agentAtivo ? "0 0 8px #10dc8c, 0 0 20px rgba(16, 220, 140, 0.4)" : "none",
               }}
             />
           </div>
@@ -122,12 +145,7 @@ export function DashboardClient({ agentAtivo, totalLeads, pedidosConfirmados, fa
           Resultado Comercial
           <span className="ml-2 text-xs font-normal normal-case opacity-60">{period.label}</span>
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <StatCard
-            title="Total de atendimentos"
-            value={totalLeads}
-            icon={<MessageSquare className="w-4 h-4" />}
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
             title="Taxa de conversão"
             value={`${taxaConversao.toFixed(1)}%`}
@@ -172,16 +190,11 @@ export function DashboardClient({ agentAtivo, totalLeads, pedidosConfirmados, fa
                   onClick={() => setMetric(m)}
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-180 cursor-pointer",
-                    metric === m
-                      ? "text-white"
-                      : "text-muted-foreground hover:text-foreground"
+                    metric === m ? "text-white" : "text-muted-foreground hover:text-foreground"
                   )}
                   style={
                     metric === m
-                      ? {
-                          background: "#059669",
-                          boxShadow: "0 0 16px rgba(5, 150, 105, 0.4)",
-                        }
+                      ? { background: "#059669", boxShadow: "0 0 16px rgba(5, 150, 105, 0.4)" }
                       : undefined
                   }
                 >
