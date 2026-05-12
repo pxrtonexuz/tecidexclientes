@@ -1,6 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function CrmLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
   return (
     <div className="p-6 space-y-6 min-h-screen">
       <div>
@@ -10,13 +16,23 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
       <div className="flex gap-2 border-b border-border pb-0">
         <Link
           href="/crm/kanban"
-          className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border-b-2 border-transparent data-[active=true]:border-primary data-[active=true]:text-foreground"
+          className={cn(
+            "px-4 py-2 text-sm font-medium transition-colors border-b-2",
+            pathname === "/crm/kanban"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
         >
           Kanban
         </Link>
         <Link
           href="/crm/leads"
-          className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border-b-2 border-transparent"
+          className={cn(
+            "px-4 py-2 text-sm font-medium transition-colors border-b-2",
+            pathname === "/crm/leads"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
         >
           Lista de Leads
         </Link>

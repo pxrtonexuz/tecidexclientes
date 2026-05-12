@@ -16,14 +16,14 @@ export default function AtendenteLayout({ children }: { children: React.ReactNod
     <div className="p-6 space-y-6 min-h-screen">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Atendente de IA</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Monitore e controle o agente Nexuz</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Monitore e controle o agente de IA</p>
       </div>
 
       <div
         className="flex items-center gap-1 p-1 rounded-[12px] w-fit"
         style={{
-          background: "rgba(5, 150, 105, 0.06)",
-          border: "1px solid rgba(5, 150, 105, 0.18)",
+          background: "rgba(255, 255, 255, 0.045)",
+          border: "1px solid rgba(255, 255, 255, 0.10)",
         }}
       >
         {tabs.map((t) => {
@@ -38,7 +38,7 @@ export default function AtendenteLayout({ children }: { children: React.ReactNod
               )}
               style={
                 active
-                  ? { background: "#059669", boxShadow: "0 0 14px rgba(5,150,105,0.4)" }
+                  ? { background: "#0f6b3f", boxShadow: "0 0 14px rgba(57,217,138,0.20)" }
                   : undefined
               }
             >

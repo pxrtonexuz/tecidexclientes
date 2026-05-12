@@ -10,7 +10,7 @@ export function Toaster(props: ToasterProps) {
       toastOptions={{
         style: {
           background: "rgba(5, 12, 8, 0.92)",
-          border: "1px solid rgba(5, 150, 105, 0.30)",
+          border: "1px solid rgba(57, 217, 138, 0.28)",
           color: "#e2f0e8",
           backdropFilter: "blur(20px)",
           borderRadius: "12px",

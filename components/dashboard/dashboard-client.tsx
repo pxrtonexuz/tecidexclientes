@@ -8,7 +8,7 @@ import {
   Area, AreaChart,
 } from "recharts";
 import { MessageSquare, Activity, ShoppingCart, TrendingUp, DollarSign } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, subDays } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { LeadRow } from "@/app/actions/leads";
@@ -55,9 +55,8 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
   const ticketMedio = pedidosConfirmados > 0 ? faturamento / pedidosConfirmados : 0;
   const taxaConversao = totalLeads > 0 ? (pedidosConfirmados / totalLeads) * 100 : 0;
 
-  // Real chart data from last 30 days
   const chartData = useMemo(() => {
-    const days = eachDayOfInterval({ start: subDays(new Date(), 29), end: new Date() });
+    const days = eachDayOfInterval({ start: period.from, end: period.to });
     return days.map((day) => {
       const dayStr = format(day, "yyyy-MM-dd");
       const dayLeads = leads.filter((l) => l.created_at.startsWith(dayStr));
@@ -70,7 +69,9 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
         faturamento: dayRevenue,
       };
     });
-  }, [leads]);
+  }, [leads, period]);
+
+  const chartXInterval = Math.max(0, Math.floor(chartData.length / 7) - 1);
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
@@ -96,13 +97,13 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
               style={{
-                background: agentAtivo ? "rgba(16, 220, 140, 0.12)" : "rgba(239, 68, 68, 0.12)",
-                border: `1px solid ${agentAtivo ? "rgba(16, 220, 140, 0.25)" : "rgba(239, 68, 68, 0.25)"}`,
+                background: agentAtivo ? "rgba(57, 217, 138, 0.12)" : "rgba(239, 68, 68, 0.12)",
+                border: `1px solid ${agentAtivo ? "rgba(57, 217, 138, 0.25)" : "rgba(239, 68, 68, 0.25)"}`,
               }}
             >
               <Activity
                 className="w-5 h-5"
-                style={{ color: agentAtivo ? "#10dc8c" : "#ef4444" }}
+                style={{ color: agentAtivo ? "#39d98a" : "#ef4444" }}
               />
             </div>
             <div className="relative z-[1]">
@@ -111,7 +112,7 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
                 className="text-lg font-bold mt-0.5"
                 style={
                   agentAtivo
-                    ? { color: "#10dc8c", textShadow: "0 0 12px rgba(16, 220, 140, 0.5)" }
+                    ? { color: "#39d98a", textShadow: "0 0 12px rgba(57, 217, 138, 0.5)" }
                     : { color: "#ef4444" }
                 }
               >
@@ -121,8 +122,8 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
             <div
               className={cn("ml-auto w-2.5 h-2.5 rounded-full shrink-0", agentAtivo && "animate-pulse")}
               style={{
-                background: agentAtivo ? "#10dc8c" : "#ef4444",
-                boxShadow: agentAtivo ? "0 0 8px #10dc8c, 0 0 20px rgba(16, 220, 140, 0.4)" : "none",
+                background: agentAtivo ? "#39d98a" : "#ef4444",
+                boxShadow: agentAtivo ? "0 0 8px #39d98a, 0 0 20px rgba(57, 217, 138, 0.4)" : "none",
               }}
             />
           </div>
@@ -167,21 +168,21 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
       {/* Chart */}
       <section>
         <div
-          className="rounded-[22px] overflow-hidden"
+          className="rounded-[16px] overflow-hidden"
           style={{
-            background: "rgba(5, 150, 105, 0.06)",
-            backdropFilter: "blur(28px) saturate(160%)",
-            WebkitBackdropFilter: "blur(28px) saturate(160%)",
-            border: "1px solid rgba(5, 150, 105, 0.22)",
+            background: "rgba(255, 255, 255, 0.045)",
+            backdropFilter: "blur(22px) saturate(160%)",
+            WebkitBackdropFilter: "blur(22px) saturate(160%)",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
           }}
         >
           <div
             className="flex flex-row items-center justify-between px-5 py-4"
-            style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.15)" }}
+            style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.09)" }}
           >
             <h3 className="text-base font-semibold text-foreground">
-              Evolução (últimos 30 dias)
+              Evolução — {period.label}
             </h3>
             <div className="flex gap-1">
               {(Object.keys(metricConfig) as ChartMetric[]).map((m) => (
@@ -194,7 +195,7 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
                   )}
                   style={
                     metric === m
-                      ? { background: "#059669", boxShadow: "0 0 16px rgba(5, 150, 105, 0.4)" }
+                      ? { background: "#0f6b3f", boxShadow: "0 0 16px rgba(57, 217, 138, 0.20)" }
                       : undefined
                   }
                 >
@@ -207,18 +208,18 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
             <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <defs>
-                  <linearGradient id="emeraldGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10dc8c" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#10dc8c" stopOpacity={0} />
+                  <linearGradient id="tecidexGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#39d98a" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#39d98a" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(5, 150, 105, 0.12)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.085)" vertical={false} />
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 11, fill: "rgba(160, 210, 185, 0.65)" }}
                   tickLine={false}
                   axisLine={false}
-                  interval={4}
+                  interval={chartXInterval}
                 />
                 <YAxis
                   tick={{ fontSize: 11, fill: "rgba(160, 210, 185, 0.65)" }}
@@ -229,7 +230,7 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "rgba(5, 12, 8, 0.92)",
-                    border: "1px solid rgba(5, 150, 105, 0.30)",
+                    border: "1px solid rgba(57, 217, 138, 0.28)",
                     borderRadius: "12px",
                     fontSize: 12,
                     backdropFilter: "blur(20px)",
@@ -243,12 +244,12 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
                 <Area
                   type="monotone"
                   dataKey={metric}
-                  stroke="#10dc8c"
+                  stroke="#39d98a"
                   strokeWidth={2}
-                  fill="url(#emeraldGrad)"
+                  fill="url(#tecidexGrad)"
                   dot={false}
-                  activeDot={{ r: 4, fill: "#10dc8c", stroke: "rgba(16, 220, 140, 0.3)", strokeWidth: 4 }}
-                  style={{ filter: "drop-shadow(0 0 6px rgba(16, 220, 140, 0.5))" }}
+                  activeDot={{ r: 4, fill: "#39d98a", stroke: "rgba(57, 217, 138, 0.3)", strokeWidth: 4 }}
+                  style={{ filter: "drop-shadow(0 0 6px rgba(57, 217, 138, 0.5))" }}
                 />
               </AreaChart>
             </ResponsiveContainer>

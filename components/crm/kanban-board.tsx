@@ -7,6 +7,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
@@ -43,8 +44,8 @@ const columns: {
 }[] = [
   { id: "em_atendimento",  label: "Em atendimento",  accent: "#38bdf8", glow: "rgba(56, 189, 248, 0.18)" },
   { id: "montando_pedido", label: "Montando pedido", accent: "#818cf8", glow: "rgba(129, 140, 248, 0.18)" },
-  { id: "pedido_fechado",  label: "Pedido fechado",  accent: "#10dc8c", glow: "rgba(16, 220, 140, 0.25)" },
-  { id: "venda_concluida", label: "Venda concluída", accent: "#10dc8c", glow: "rgba(16, 220, 140, 0.3)" },
+  { id: "pedido_fechado",  label: "Pedido fechado",  accent: "#39d98a", glow: "rgba(57, 217, 138, 0.25)" },
+  { id: "venda_concluida", label: "Venda concluída", accent: "#39d98a", glow: "rgba(57, 217, 138, 0.3)" },
   { id: "sem_resposta",    label: "Sem resposta",    accent: "#f59e0b", glow: "rgba(245, 158, 11, 0.18)" },
   { id: "perdido",         label: "Perdido",         accent: "#ef4444", glow: "rgba(239, 68, 68, 0.18)" },
 ];
@@ -67,14 +68,14 @@ function LeadCard({ lead, isDragging }: { lead: Lead; isDragging?: boolean }) {
     <div
       className={cn("p-3 space-y-2.5 cursor-grab active:cursor-grabbing select-none transition-all")}
       style={{
-        background: isDragging ? "rgba(5, 150, 105, 0.18)" : "rgba(5, 150, 105, 0.07)",
-        backdropFilter: "blur(28px) saturate(160%)",
-        WebkitBackdropFilter: "blur(28px) saturate(160%)",
-        border: `1px solid ${isDragging ? (col?.glow ?? "rgba(5,150,105,0.35)") : "rgba(5, 150, 105, 0.22)"}`,
+        background: isDragging ? "rgba(255, 255, 255, 0.10)" : "rgba(255, 255, 255, 0.055)",
+        backdropFilter: "blur(22px) saturate(160%)",
+        WebkitBackdropFilter: "blur(22px) saturate(160%)",
+        border: `1px solid ${isDragging ? (col?.glow ?? "rgba(57,217,138,0.24)") : "rgba(255, 255, 255, 0.12)"}`,
         borderRadius: "14px",
         boxShadow: isDragging
-          ? `0 20px 60px rgba(0,0,0,0.5), 0 0 30px ${col?.glow ?? "rgba(5,150,105,0.35)"}`
-          : "0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(16,220,140,0.08)",
+          ? `0 20px 60px rgba(0,0,0,0.5), 0 0 30px ${col?.glow ?? "rgba(57,217,138,0.24)"}`
+          : "0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(57,217,138,0.08)",
         transform: isDragging ? "scale(1.03) rotate(1deg)" : undefined,
         opacity: isDragging ? 0.85 : 1,
       }}
@@ -83,7 +84,7 @@ function LeadCard({ lead, isDragging }: { lead: Lead; isDragging?: boolean }) {
         <div className="flex items-center gap-2 min-w-0">
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-            style={{ background: "rgba(5, 150, 105, 0.12)", border: "1px solid rgba(5, 150, 105, 0.2)" }}
+            style={{ background: "rgba(255, 255, 255, 0.085)", border: "1px solid rgba(255, 255, 255, 0.11)" }}
           >
             <User className="w-3.5 h-3.5 text-muted-foreground" />
           </div>
@@ -92,7 +93,7 @@ function LeadCard({ lead, isDragging }: { lead: Lead; isDragging?: boolean }) {
         {lead.value && (
           <span
             className="text-xs font-semibold shrink-0"
-            style={{ color: "#10dc8c", textShadow: "0 0 8px rgba(16,220,140,0.4)" }}
+            style={{ color: "#39d98a", textShadow: "0 0 8px rgba(57,217,138,0.4)" }}
           >
             R$ {lead.value.toLocaleString("pt-BR")}
           </span>
@@ -110,6 +111,46 @@ function LeadCard({ lead, isDragging }: { lead: Lead; isDragging?: boolean }) {
           {format(lead.lastContact, "dd 'de' MMM", { locale: ptBR })}
         </span>
       </div>
+    </div>
+  );
+}
+
+function DroppableColumnBody({
+  colId,
+  children,
+  isEmpty,
+}: {
+  colId: string;
+  children: React.ReactNode;
+  isEmpty: boolean;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: colId });
+  return (
+    <div
+      ref={setNodeRef}
+      className="flex-1 min-h-48 p-2 space-y-2 rounded-b-[16px]"
+      style={{
+        background: isOver ? "rgba(255, 255, 255, 0.06)" : "rgba(255, 255, 255, 0.025)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        border: "1px solid rgba(255, 255, 255, 0.085)",
+        borderTop: "none",
+        boxShadow: "inset 0 1px 0 rgba(57, 217, 138, 0.04)",
+        transition: "background 150ms",
+      }}
+    >
+      {children}
+      {isEmpty && (
+        <div
+          className="h-24 flex items-center justify-center text-xs text-muted-foreground rounded-xl"
+          style={{
+            border: `2px dashed ${isOver ? "rgba(57, 217, 138, 0.36)" : "rgba(255, 255, 255, 0.10)"}`,
+            transition: "border-color 150ms",
+          }}
+        >
+          Solte aqui
+        </div>
+      )}
     </div>
   );
 }
@@ -159,11 +200,11 @@ export function KanbanBoard({ initialLeads }: { initialLeads: LeadRow[] }) {
               <div
                 className="flex items-center justify-between px-3 py-2.5 rounded-t-[16px]"
                 style={{
-                  background: "rgba(5, 150, 105, 0.05)",
+                  background: "rgba(255, 255, 255, 0.04)",
                   borderTop: `1px solid ${col.glow.replace("0.18", "0.25").replace("0.25", "0.3").replace("0.3", "0.35")}`,
-                  borderLeft: "1px solid rgba(5, 150, 105, 0.15)",
-                  borderRight: "1px solid rgba(5, 150, 105, 0.15)",
-                  borderBottom: "1px solid rgba(5, 150, 105, 0.12)",
+                  borderLeft: "1px solid rgba(255, 255, 255, 0.09)",
+                  borderRight: "1px solid rgba(255, 255, 255, 0.09)",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.085)",
                 }}
               >
                 <span className="text-xs font-semibold" style={{ color: col.accent }}>
@@ -172,8 +213,8 @@ export function KanbanBoard({ initialLeads }: { initialLeads: LeadRow[] }) {
                 <span
                   className="text-xs font-bold px-1.5 py-0.5 rounded-full"
                   style={{
-                    background: "rgba(5, 150, 105, 0.08)",
-                    border: "1px solid rgba(5, 150, 105, 0.20)",
+                    background: "rgba(255, 255, 255, 0.06)",
+                    border: "1px solid rgba(255, 255, 255, 0.11)",
                     color: col.accent,
                   }}
                 >
@@ -187,31 +228,11 @@ export function KanbanBoard({ initialLeads }: { initialLeads: LeadRow[] }) {
                 items={colLeads.map((l) => l.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div
-                  className="flex-1 min-h-48 p-2 space-y-2 rounded-b-[16px]"
-                  style={{
-                    background: "rgba(5, 150, 105, 0.03)",
-                    backdropFilter: "blur(12px)",
-                    WebkitBackdropFilter: "blur(12px)",
-                    border: "1px solid rgba(5, 150, 105, 0.12)",
-                    borderTop: "none",
-                    boxShadow: "inset 0 1px 0 rgba(16, 220, 140, 0.04)",
-                  }}
-                >
+                <DroppableColumnBody colId={col.id} isEmpty={colLeads.length === 0}>
                   {colLeads.map((lead) => (
                     <SortableLeadCard key={lead.id} lead={lead} />
                   ))}
-                  {colLeads.length === 0 && (
-                    <div
-                      className="h-24 flex items-center justify-center text-xs text-muted-foreground rounded-xl"
-                      style={{
-                        border: "2px dashed rgba(5, 150, 105, 0.18)",
-                      }}
-                    >
-                      Solte aqui
-                    </div>
-                  )}
-                </div>
+                </DroppableColumnBody>
               </SortableContext>
             </div>
           );

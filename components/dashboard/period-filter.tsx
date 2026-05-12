@@ -54,8 +54,8 @@ export function PeriodFilter({ onChange }: { onChange?: (period: Period) => void
     <div
       className="flex items-center gap-1 p-1 rounded-[12px]"
       style={{
-        background: "rgba(5, 150, 105, 0.06)",
-        border: "1px solid rgba(5, 150, 105, 0.18)",
+        background: "rgba(255, 255, 255, 0.045)",
+        border: "1px solid rgba(255, 255, 255, 0.10)",
       }}
     >
       {presets.map((p) =>
@@ -71,7 +71,7 @@ export function PeriodFilter({ onChange }: { onChange?: (period: Period) => void
                   )}
                   style={
                     active === p
-                      ? { background: "#059669", color: "#fff", boxShadow: "0 0 14px rgba(5,150,105,0.4)" }
+                      ? { background: "#0f6b3f", color: "#fff", boxShadow: "0 0 14px rgba(57,217,138,0.20)" }
                       : undefined
                   }
                 >
@@ -110,7 +110,7 @@ export function PeriodFilter({ onChange }: { onChange?: (period: Period) => void
             )}
             style={
               active === p
-                ? { background: "#059669", color: "#fff", boxShadow: "0 0 14px rgba(5,150,105,0.4)" }
+                ? { background: "#0f6b3f", color: "#fff", boxShadow: "0 0 14px rgba(57,217,138,0.20)" }
                 : undefined
             }
           >

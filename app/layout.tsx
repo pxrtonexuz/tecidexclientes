@@ -23,16 +23,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className={`dark ${montserrat.variable} ${dmMono.variable}`}>
       <body className="antialiased">
-        {/* Emerald ambient blobs */}
+        {/* Tecidex ambient light */}
         <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
           <div
             className="absolute rounded-full"
             style={{
               width: "60vw", height: "60vw",
               top: "-20%", right: "-15%",
-              background: "radial-gradient(circle, rgba(5,150,105,0.09) 0%, transparent 70%)",
+              background: "radial-gradient(circle, rgba(15,107,63,0.16) 0%, transparent 70%)",
               filter: "blur(80px)",
-              animation: "emerald-drift 20s ease-in-out infinite alternate",
+              animation: "tecidex-drift 20s ease-in-out infinite alternate",
             }}
           />
           <div
@@ -40,9 +40,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             style={{
               width: "40vw", height: "40vw",
               bottom: "-15%", left: "-10%",
-              background: "radial-gradient(circle, rgba(5,150,105,0.06) 0%, transparent 70%)",
+              background: "radial-gradient(circle, rgba(57,217,138,0.08) 0%, transparent 70%)",
               filter: "blur(100px)",
-              animation: "emerald-drift 28s ease-in-out infinite alternate-reverse",
+              animation: "tecidex-drift 28s ease-in-out infinite alternate-reverse",
             }}
           />
         </div>

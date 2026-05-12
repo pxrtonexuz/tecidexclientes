@@ -31,8 +31,8 @@ const statusLabels: Record<KanbanStatus, string> = {
 const statusStyles: Record<KanbanStatus, React.CSSProperties> = {
   em_atendimento:  { background: "rgba(56, 189, 248, 0.12)", border: "1px solid rgba(56, 189, 248, 0.25)", color: "#38bdf8" },
   montando_pedido: { background: "rgba(129, 140, 248, 0.12)", border: "1px solid rgba(129, 140, 248, 0.25)", color: "#818cf8" },
-  pedido_fechado:  { background: "rgba(16, 220, 140, 0.12)", border: "1px solid rgba(16, 220, 140, 0.28)", color: "#10dc8c" },
-  venda_concluida: { background: "rgba(16, 220, 140, 0.15)", border: "1px solid rgba(16, 220, 140, 0.35)", color: "#10dc8c" },
+  pedido_fechado:  { background: "rgba(57, 217, 138, 0.12)", border: "1px solid rgba(57, 217, 138, 0.28)", color: "#39d98a" },
+  venda_concluida: { background: "rgba(57, 217, 138, 0.15)", border: "1px solid rgba(57, 217, 138, 0.35)", color: "#39d98a" },
   sem_resposta:    { background: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(245, 158, 11, 0.25)", color: "#f59e0b" },
   perdido:         { background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.25)", color: "#ef4444" },
 };
@@ -142,13 +142,13 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
             value={search}
             onChange={(e) => applyFilter(() => setSearch(e.target.value))}
             className="pl-9"
-            style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
+            style={{ background: "rgba(255, 255, 255, 0.045)", border: "1px solid rgba(255, 255, 255, 0.11)" }}
           />
         </div>
         <Select value={filterStatus} onValueChange={(v) => applyFilter(() => setFilterStatus(v ?? "all"))}>
           <SelectTrigger
             className="w-48 cursor-pointer"
-            style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
+            style={{ background: "rgba(255, 255, 255, 0.045)", border: "1px solid rgba(255, 255, 255, 0.11)" }}
           >
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -162,7 +162,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
         <Select value={filterModel} onValueChange={(v) => applyFilter(() => setFilterModel(v ?? "all"))}>
           <SelectTrigger
             className="w-48 cursor-pointer"
-            style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
+            style={{ background: "rgba(255, 255, 255, 0.045)", border: "1px solid rgba(255, 255, 255, 0.11)" }}
           >
             <SelectValue placeholder="Modelo" />
           </SelectTrigger>
@@ -177,19 +177,19 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
 
       {/* Table */}
       <div
-        className="rounded-[22px] overflow-hidden"
+        className="rounded-[16px] overflow-hidden"
         style={{
-          background: "rgba(5, 150, 105, 0.05)",
-          backdropFilter: "blur(28px) saturate(160%)",
-          WebkitBackdropFilter: "blur(28px) saturate(160%)",
-          border: "1px solid rgba(5, 150, 105, 0.20)",
-          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(16, 220, 140, 0.06)",
+          background: "rgba(255, 255, 255, 0.04)",
+          backdropFilter: "blur(22px) saturate(160%)",
+          WebkitBackdropFilter: "blur(22px) saturate(160%)",
+          border: "1px solid rgba(255, 255, 255, 0.11)",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(57, 217, 138, 0.06)",
         }}
       >
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ background: "rgba(5, 150, 105, 0.08)", borderBottom: "1px solid rgba(5, 150, 105, 0.18)" }}>
+              <tr style={{ background: "rgba(255, 255, 255, 0.06)", borderBottom: "1px solid rgba(255, 255, 255, 0.10)" }}>
                 {["Nome", "Contato", "Entrada", "Modelo", "Status", "Valor do Pedido", "Observações"].map((h) => (
                   <th
                     key={h}
@@ -206,8 +206,8 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                 <tr
                   key={lead.id}
                   className="last:border-0 transition-colors duration-150"
-                  style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.08)" }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(5, 150, 105, 0.06)"; }}
+                  style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(255, 255, 255, 0.045)"; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}
                 >
                   <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{lead.name}</td>
@@ -222,7 +222,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                       onBlur={(e) => handleModeloChange(lead.id, e.target.value)}
                       placeholder="Modelo..."
                       className="h-7 text-xs w-36"
-                      style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
+                      style={{ background: "rgba(255, 255, 255, 0.045)", border: "1px solid rgba(255, 255, 255, 0.10)" }}
                     />
                   </td>
                   <td className="px-4 py-3">
@@ -247,7 +247,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                       onBlur={(e) => handleValorBlur(lead.id, e.target.value)}
                       placeholder="R$ 0,00"
                       className="h-7 text-xs w-32"
-                      style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
+                      style={{ background: "rgba(255, 255, 255, 0.045)", border: "1px solid rgba(255, 255, 255, 0.10)" }}
                     />
                   </td>
                   <td className="px-4 py-3">
@@ -257,7 +257,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                       onBlur={(e) => handleObservacoesBlur(lead.id, e.target.value)}
                       placeholder="Observações..."
                       className="h-7 text-xs"
-                      style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
+                      style={{ background: "rgba(255, 255, 255, 0.045)", border: "1px solid rgba(255, 255, 255, 0.10)" }}
                     />
                   </td>
                 </tr>
@@ -277,7 +277,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
         {totalPages > 1 && (
           <div
             className="flex items-center justify-between px-4 py-3"
-            style={{ borderTop: "1px solid rgba(5, 150, 105, 0.15)" }}
+            style={{ borderTop: "1px solid rgba(255, 255, 255, 0.09)" }}
           >
             <span className="text-xs text-muted-foreground">
               {filtered.length} leads · página {page} de {totalPages}
@@ -287,7 +287,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
+                style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.10)" }}
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
@@ -300,8 +300,8 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                     className="w-7 h-7 rounded-lg text-xs font-medium cursor-pointer transition-all duration-180"
                     style={
                       page === p
-                        ? { background: "#059669", color: "#fff", boxShadow: "0 0 10px rgba(5,150,105,0.4)" }
-                        : { background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.18)", color: "var(--muted-foreground)" }
+                        ? { background: "#0f6b3f", color: "#fff", boxShadow: "0 0 10px rgba(57,217,138,0.20)" }
+                        : { background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.10)", color: "var(--muted-foreground)" }
                     }
                   >
                     {p}
@@ -312,7 +312,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
+                style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.10)" }}
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>

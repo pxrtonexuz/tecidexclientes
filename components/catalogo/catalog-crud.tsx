@@ -25,16 +25,16 @@ export type AtributoItem = { id: string; categoria: AtributoCategory; nome: stri
 // ─── Shared glass styles ──────────────────────────────────────────────────────
 
 const glassTable: React.CSSProperties = {
-  background: "rgba(5, 150, 105, 0.05)",
-  backdropFilter: "blur(28px) saturate(160%)",
-  WebkitBackdropFilter: "blur(28px) saturate(160%)",
-  border: "1px solid rgba(5, 150, 105, 0.20)",
+  background: "rgba(255, 255, 255, 0.04)",
+  backdropFilter: "blur(22px) saturate(160%)",
+  WebkitBackdropFilter: "blur(22px) saturate(160%)",
+  border: "1px solid rgba(255, 255, 255, 0.11)",
   boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
 };
 
 const glassDialog: React.CSSProperties = {
   background: "rgba(5, 12, 8, 0.96)",
-  border: "1px solid rgba(5, 150, 105, 0.25)",
+  border: "1px solid rgba(57, 217, 138, 0.22)",
   backdropFilter: "blur(40px)",
 };
 
@@ -111,12 +111,12 @@ function ModelDialog({
           <div className="space-y-1.5">
             <Label>Nome</Label>
             <Input value={nome} onChange={(e) => setNome(e.target.value)}
-              style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }} />
+              style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.11)" }} />
           </div>
           <div className="space-y-1.5">
             <Label>Descrição</Label>
             <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)}
-              style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
+              style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.11)" }}
               className="resize-none" rows={3} />
           </div>
           <div className="flex items-center gap-3">
@@ -180,10 +180,10 @@ export function ModelosCrud({ initialModelos }: { initialModelos: ModeloRow[] })
       <div className="flex justify-end">
         <Button onClick={openNew} className="gap-2 cursor-pointer"><Plus className="w-4 h-4" /> Novo Modelo</Button>
       </div>
-      <div className="rounded-[22px] overflow-hidden" style={glassTable}>
+      <div className="rounded-[16px] overflow-hidden" style={glassTable}>
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ background: "rgba(5, 150, 105, 0.08)", borderBottom: "1px solid rgba(5, 150, 105, 0.18)" }}>
+            <tr style={{ background: "rgba(255, 255, 255, 0.06)", borderBottom: "1px solid rgba(255, 255, 255, 0.10)" }}>
               {["Nome", "Descrição", "Status", "Ações"].map((h, i) => (
                 <th key={h} className={cn("px-4 py-3", i === 3 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
               ))}
@@ -192,15 +192,15 @@ export function ModelosCrud({ initialModelos }: { initialModelos: ModeloRow[] })
           <tbody>
             {items.map((item) => (
               <tr key={item.id} className="transition-colors duration-150 last:border-0"
-                style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.08)" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(5, 150, 105, 0.06)"; }}
+                style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(255, 255, 255, 0.045)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}>
                 <td className="px-4 py-3 font-medium text-foreground">{item.nome}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{item.descricao}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Switch checked={item.ativo} onCheckedChange={() => toggleAtivo(item)} />
-                    <span className={cn("text-xs", item.ativo ? "text-emerald-400" : "text-muted-foreground")}>
+                    <span className={cn("text-xs", item.ativo ? "text-[#39d98a]" : "text-muted-foreground")}>
                       {item.ativo ? "Ativo" : "Inativo"}
                     </span>
                   </div>
@@ -281,10 +281,10 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
       <div className="flex justify-end">
         <Button onClick={openNew} className="gap-2 cursor-pointer"><Plus className="w-4 h-4" /> Novo Tecido</Button>
       </div>
-      <div className="rounded-[22px] overflow-hidden" style={glassTable}>
+      <div className="rounded-[16px] overflow-hidden" style={glassTable}>
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ background: "rgba(5, 150, 105, 0.08)", borderBottom: "1px solid rgba(5, 150, 105, 0.18)" }}>
+            <tr style={{ background: "rgba(255, 255, 255, 0.06)", borderBottom: "1px solid rgba(255, 255, 255, 0.10)" }}>
               {["Nome", "Descrição sensorial", "Status", "Ações"].map((h, i) => (
                 <th key={h} className={cn("px-4 py-3", i === 3 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
               ))}
@@ -293,13 +293,13 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
           <tbody>
             {items.map((item) => (
               <tr key={item.id} className="transition-colors duration-150 last:border-0"
-                style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.08)" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(5, 150, 105, 0.06)"; }}
+                style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(255, 255, 255, 0.045)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}>
                 <td className="px-4 py-3 font-medium text-foreground">{item.nome}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{item.descricaoSensorial}</td>
                 <td className="px-4 py-3">
-                  <Badge className={cn("text-xs border", item.ativo ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" : "bg-muted text-muted-foreground border-border")}>
+                  <Badge className={cn("text-xs border", item.ativo ? "bg-[#39d98a]/15 text-[#39d98a] border-[#39d98a]/20" : "bg-muted text-muted-foreground border-border")}>
                     {item.ativo ? "Ativo" : "Inativo"}
                   </Badge>
                 </td>
@@ -325,18 +325,18 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
             <div className="space-y-1.5">
               <Label>Nome</Label>
               <Input value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
-                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }} />
+                style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.11)" }} />
             </div>
             <div className="space-y-1.5">
               <Label>Descrição sensorial</Label>
               <Textarea value={form.descricaoSensorial} onChange={(e) => setForm((f) => ({ ...f, descricaoSensorial: e.target.value }))}
-                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
+                style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.11)" }}
                 className="resize-none" rows={3} />
             </div>
             <div className="space-y-1.5">
               <Label>URL da imagem de referência</Label>
               <Input value={form.imagemUrl} onChange={(e) => setForm((f) => ({ ...f, imagemUrl: e.target.value }))} placeholder="https://..."
-                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }} />
+                style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.11)" }} />
             </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.ativo} onCheckedChange={(v) => setForm((f) => ({ ...f, ativo: v }))} />
@@ -416,7 +416,7 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div
           className="flex items-center gap-1 p-1 rounded-[12px] flex-wrap"
-          style={{ background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
+          style={{ background: "rgba(255, 255, 255, 0.045)", border: "1px solid rgba(255, 255, 255, 0.10)" }}
         >
           {(["all", ...atributoCategories] as const).map((cat) => (
             <button
@@ -424,7 +424,7 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
               onClick={() => setActiveCategory(cat)}
               className={cn("px-3 py-1.5 rounded-[9px] text-xs font-medium transition-all duration-180 cursor-pointer",
                 activeCategory !== cat && "text-muted-foreground hover:text-foreground")}
-              style={activeCategory === cat ? { background: "#059669", color: "#fff", boxShadow: "0 0 10px rgba(5,150,105,0.4)" } : undefined}
+              style={activeCategory === cat ? { background: "#0f6b3f", color: "#fff", boxShadow: "0 0 10px rgba(57,217,138,0.20)" } : undefined}
             >
               {cat === "all" ? "Todos" : cat}
             </button>
@@ -433,10 +433,10 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
         <Button onClick={openNew} className="gap-2 cursor-pointer"><Plus className="w-4 h-4" /> Novo Atributo</Button>
       </div>
 
-      <div className="rounded-[22px] overflow-hidden" style={glassTable}>
+      <div className="rounded-[16px] overflow-hidden" style={glassTable}>
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ background: "rgba(5, 150, 105, 0.08)", borderBottom: "1px solid rgba(5, 150, 105, 0.18)" }}>
+            <tr style={{ background: "rgba(255, 255, 255, 0.06)", borderBottom: "1px solid rgba(255, 255, 255, 0.10)" }}>
               {["Categoria", "Nome", "Descrição", "Status", "Ações"].map((h, i) => (
                 <th key={h} className={cn("px-4 py-3", i === 4 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
               ))}
@@ -445,19 +445,19 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
           <tbody>
             {filtered.map((item) => (
               <tr key={item.id} className="transition-colors duration-150 last:border-0"
-                style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.08)" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(5, 150, 105, 0.06)"; }}
+                style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(255, 255, 255, 0.045)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}>
                 <td className="px-4 py-3">
                   <span className="px-2 py-0.5 rounded-full text-xs font-medium"
-                    style={{ background: "rgba(5, 150, 105, 0.15)", border: "1px solid rgba(5, 150, 105, 0.25)", color: "#10dc8c" }}>
+                    style={{ background: "rgba(255, 255, 255, 0.09)", border: "1px solid rgba(57, 217, 138, 0.22)", color: "#39d98a" }}>
                     {item.categoria}
                   </span>
                 </td>
                 <td className="px-4 py-3 font-medium text-foreground">{item.nome}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{item.descricao}</td>
                 <td className="px-4 py-3">
-                  <Badge className={cn("text-xs border", item.ativo ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" : "bg-muted text-muted-foreground border-border")}>
+                  <Badge className={cn("text-xs border", item.ativo ? "bg-[#39d98a]/15 text-[#39d98a] border-[#39d98a]/20" : "bg-muted text-muted-foreground border-border")}>
                     {item.ativo ? "Ativo" : "Inativo"}
                   </Badge>
                 </td>
@@ -485,25 +485,25 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
               <Label>Categoria</Label>
               <select value={form.categoria} onChange={(e) => setForm((f) => ({ ...f, categoria: e.target.value as AtributoCategory }))}
                 className="w-full rounded-md px-3 py-2 text-sm text-foreground cursor-pointer"
-                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }}>
+                style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.11)" }}>
                 {atributoCategories.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="space-y-1.5">
               <Label>Nome</Label>
               <Input value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
-                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }} />
+                style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.11)" }} />
             </div>
             <div className="space-y-1.5">
               <Label>Descrição</Label>
               <Textarea value={form.descricao} onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
-                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }}
+                style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.11)" }}
                 className="resize-none" rows={3} />
             </div>
             <div className="space-y-1.5">
               <Label>URL da imagem de referência</Label>
               <Input value={form.imagemUrl} onChange={(e) => setForm((f) => ({ ...f, imagemUrl: e.target.value }))} placeholder="https://..."
-                style={{ background: "rgba(5, 150, 105, 0.08)", border: "1px solid rgba(5, 150, 105, 0.20)" }} />
+                style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.11)" }} />
             </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.ativo} onCheckedChange={(v) => setForm((f) => ({ ...f, ativo: v }))} />

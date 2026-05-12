@@ -73,14 +73,14 @@ function GaugeSvg({ score }: { score: number }) {
 }
 
 export function HealthGauge({ score, components }: { score: number; components: ScoreComponent[] }) {
-  const status = score <= 40 ? { label: "Crítico", color: "text-red-400" } : score <= 70 ? { label: "Atenção", color: "text-yellow-400" } : { label: "Saudável", color: "text-emerald-400" };
+  const status = score <= 40 ? { label: "Crítico", color: "text-red-400" } : score <= 70 ? { label: "Atenção", color: "text-yellow-400" } : { label: "Saudável", color: "text-[#39d98a]" };
 
   return (
-    <div className="p-6 rounded-[22px] space-y-6" style={{
-      background: "rgba(5, 150, 105, 0.06)",
-      backdropFilter: "blur(28px) saturate(160%)",
-      WebkitBackdropFilter: "blur(28px) saturate(160%)",
-      border: "1px solid rgba(5, 150, 105, 0.22)",
+    <div className="p-6 rounded-[16px] space-y-6" style={{
+      background: "rgba(255, 255, 255, 0.045)",
+      backdropFilter: "blur(22px) saturate(160%)",
+      WebkitBackdropFilter: "blur(22px) saturate(160%)",
+      border: "1px solid rgba(255, 255, 255, 0.12)",
       boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
     }}>
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Termômetro de Saúde</h3>
@@ -92,7 +92,7 @@ export function HealthGauge({ score, components }: { score: number; components: 
         <div className="flex-1 space-y-3 w-full">
           {components.map((c) => {
             const pct = (c.score / c.maxScore) * 100;
-            const barColor = pct <= 40 ? "bg-red-500" : pct <= 70 ? "bg-yellow-500" : "bg-emerald-500";
+            const barColor = pct <= 40 ? "bg-red-500" : pct <= 70 ? "bg-yellow-500" : "bg-[#39d98a]";
             return (
               <div key={c.label} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">

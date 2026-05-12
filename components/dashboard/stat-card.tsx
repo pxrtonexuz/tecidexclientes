@@ -24,7 +24,7 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
         {icon && (
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground shrink-0"
-            style={{ background: "rgba(5, 150, 105, 0.12)", border: "1px solid rgba(5, 150, 105, 0.18)" }}
+            style={{ background: "rgba(255, 255, 255, 0.085)", border: "1px solid rgba(255, 255, 255, 0.10)" }}
           >
             {icon}
           </div>
@@ -36,13 +36,13 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
           <span
             className={cn(
               "text-2xl font-bold tracking-tight",
-              highlight === "success" && "text-emerald-400",
+              highlight === "success" && "text-[#39d98a]",
               highlight === "danger" && "text-destructive",
               !highlight && "text-foreground"
             )}
             style={
               highlight === "success"
-                ? { textShadow: "0 0 12px rgba(16, 220, 140, 0.4)" }
+                ? { textShadow: "0 0 12px rgba(57, 217, 138, 0.4)" }
                 : undefined
             }
           >
@@ -58,14 +58,14 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
               isNeutral
                 ? "text-muted-foreground"
                 : isPositive
-                ? "text-emerald-400"
+                ? "text-[#39d98a]"
                 : "text-red-400"
             )}
             style={
               isNeutral
                 ? { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }
                 : isPositive
-                ? { background: "rgba(16, 220, 140, 0.12)", border: "1px solid rgba(16, 220, 140, 0.25)" }
+                ? { background: "rgba(57, 217, 138, 0.12)", border: "1px solid rgba(57, 217, 138, 0.25)" }
                 : { background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.25)" }
             }
           >

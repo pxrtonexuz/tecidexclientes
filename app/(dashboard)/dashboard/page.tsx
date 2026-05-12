@@ -7,7 +7,7 @@ export default async function DashboardPage() {
 
   return (
     <DashboardClient
-      agentAtivo={agentConfig?.ativo ?? true}
+      agentAtivo={agentConfig?.ativo ?? false}
       leads={leads}
     />
   );

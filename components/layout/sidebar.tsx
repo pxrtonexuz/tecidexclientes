@@ -76,10 +76,10 @@ function NavSection({ item, collapsed, pathname }: { item: NavItem; collapsed: b
   const [open, setOpen] = useState(isActive);
 
   const activeStyle: React.CSSProperties = {
-    background: "rgba(5, 150, 105, 0.14)",
-    border: "1px solid rgba(5, 150, 105, 0.28)",
-    boxShadow: "0 2px 12px rgba(5, 150, 105, 0.18), inset 0 1px 0 rgba(16, 220, 140, 0.15)",
-    color: "#10dc8c",
+    background: "rgba(15, 107, 63, 0.22)",
+    border: "1px solid rgba(57, 217, 138, 0.26)",
+    boxShadow: "0 2px 12px rgba(57, 217, 138, 0.13), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+    color: "#39d98a",
   };
 
   if (item.href) {
@@ -124,7 +124,7 @@ function NavSection({ item, collapsed, pathname }: { item: NavItem; collapsed: b
         <Tooltip>
           <TooltipTrigger
             render={
-              <div className={cn(navItemBase, "text-muted-foreground hover:text-foreground hover:bg-muted/50", isActive && "text-[#10dc8c]")}>
+              <div className={cn(navItemBase, "text-muted-foreground hover:text-foreground hover:bg-muted/50", isActive && "text-[#39d98a]")}>
                 <Icon className="w-5 h-5 shrink-0" />
               </div>
             }
@@ -142,7 +142,7 @@ function NavSection({ item, collapsed, pathname }: { item: NavItem; collapsed: b
         className={cn(
           navItemBase,
           "w-full justify-between",
-          isActive ? "text-[#10dc8c]" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          isActive ? "text-[#39d98a]" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
         )}
       >
         <div className="flex items-center gap-3">
@@ -165,7 +165,7 @@ function NavSection({ item, collapsed, pathname }: { item: NavItem; collapsed: b
                     ? "font-medium"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
-                style={childActive ? { color: "#10dc8c", background: "rgba(5,150,105,0.1)" } : undefined}
+                style={childActive ? { color: "#39d98a", background: "rgba(15,107,63,0.22)" } : undefined}
               >
                 {child.label}
               </Link>
@@ -196,32 +196,32 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
         collapsed ? "w-16" : "w-64"
       )}
       style={{
-        background: "rgba(5, 12, 8, 0.82)",
-        backdropFilter: "blur(56px) saturate(180%)",
-        WebkitBackdropFilter: "blur(56px) saturate(180%)",
-        borderRight: "1px solid rgba(5, 150, 105, 0.20)",
-        boxShadow: "4px 0 32px rgba(0, 0, 0, 0.4), inset -1px 0 0 rgba(5, 150, 105, 0.08)",
+        background: "rgba(4, 21, 13, 0.9)",
+        backdropFilter: "blur(44px) saturate(155%)",
+        WebkitBackdropFilter: "blur(44px) saturate(155%)",
+        borderRight: "1px solid rgba(255, 255, 255, 0.11)",
+        boxShadow: "4px 0 32px rgba(0, 0, 0, 0.4), inset -1px 0 0 rgba(255, 255, 255, 0.06)",
       }}
     >
       {/* Header — Tecidex logo */}
       <div
         className="flex items-center justify-center px-4 py-5"
-        style={{ borderBottom: "1px solid rgba(5, 150, 105, 0.15)" }}
+        style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.09)" }}
       >
         {!collapsed ? (
           <Image
             src="/LogoTecidexPlataforma.png"
             alt="Tecidex"
-            width={110}
-            height={36}
+            width={132}
+            height={52}
             className="object-contain"
           />
         ) : (
           <Image
             src="/LogoTecidexPlataforma.png"
             alt="Tecidex"
-            width={28}
-            height={28}
+            width={36}
+            height={36}
             className="object-contain"
           />
         )}
@@ -233,7 +233,7 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
         className="absolute -right-3 top-16 z-10 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all duration-180 hover:scale-110"
         style={{
           background: "rgba(5, 12, 8, 0.9)",
-          border: "1px solid rgba(5, 150, 105, 0.30)",
+          border: "1px solid rgba(57, 217, 138, 0.28)",
           boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
         }}
         aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
@@ -251,7 +251,7 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
       </nav>
 
       {/* Footer — User section */}
-      <div className="px-3 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid rgba(5, 150, 105, 0.15)" }}>
+      <div className="px-3 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid rgba(255, 255, 255, 0.09)" }}>
         {collapsed ? (
           <TooltipProvider delay={0}>
             <Tooltip>
@@ -276,9 +276,9 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-sm font-semibold"
                 style={{
-                  background: "rgba(5, 150, 105, 0.20)",
-                  border: "1px solid rgba(16, 220, 140, 0.28)",
-                  color: "#10dc8c",
+                  background: "rgba(255, 255, 255, 0.11)",
+                  border: "1px solid rgba(57, 217, 138, 0.28)",
+                  color: "#39d98a",
                 }}
               >
                 {(companyName ?? userEmail ?? "U").charAt(0).toUpperCase()}

@@ -33,18 +33,26 @@ export async function toggleAgentAtivo(id: string, ativo: boolean) {
   revalidatePath("/atendente/saude");
 }
 
-export async function pausarConversaIA(telefone: string) {
+// Extrai o número de telefone puro do session_id do n8n/UazAPI.
+// Formato esperado: "5511999998888@s.whatsapp.net" ou "5511999998888"
+function extractPhone(sessionId: string): string {
+  return sessionId.split("@")[0].replace(/\D/g, "");
+}
+
+export async function pausarConversaIA(sessionId: string) {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
+  const telefone = extractPhone(sessionId);
   await db
     .from("dados_cliente")
     .update({ atendimento_ia: "pause" })
     .eq("telefone", telefone);
 }
 
-export async function reativarConversaIA(telefone: string) {
+export async function reativarConversaIA(sessionId: string) {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
+  const telefone = extractPhone(sessionId);
   await db
     .from("dados_cliente")
     .update({ atendimento_ia: "reativada" })
@@ -63,9 +71,25 @@ export type ConversaData = {
   session_id: string;
   clientName: string;
   status: "ativa" | "concluida" | "pausada";
-  lastMessage: string;
-  messages: { id: string; from: "cliente" | "agente"; text: string; at: string }[];
+  lastMessage: string | null;
+  messages: { id: string; from: "cliente" | "agente"; text: string; at: string | null }[];
 };
+
+// Formata session_id como número de telefone legível quando possível.
+function formatClientName(sessionId: string): string {
+  const digits = sessionId.split("@")[0].replace(/\D/g, "");
+  // Número brasileiro com código de país: 5511999998888 (13 dígitos) ou 551199998888 (12)
+  if (digits.length === 13 && digits.startsWith("55")) {
+    const local = digits.slice(2);
+    return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  }
+  if (digits.length === 12 && digits.startsWith("55")) {
+    const local = digits.slice(2);
+    return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+  }
+  // Se não for número brasileiro reconhecível, retorna o session_id sem o sufixo
+  return sessionId.split("@")[0];
+}
 
 export async function getChatConversations(): Promise<ConversaData[]> {
   const { tenant } = await requireTenantSession();
@@ -86,24 +110,23 @@ export async function getChatConversations(): Promise<ConversaData[]> {
     grouped.get(row.session_id)!.push(row);
   }
 
-  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const lastGlobalId = rows[rows.length - 1]?.id ?? 0;
 
   return Array.from(grouped.entries()).map(([session_id, msgs]) => {
-    const last = msgs[msgs.length - 1];
-    const lastId = last.id;
-    const estimatedTime = new Date(cutoff + (lastId / 10000) * cutoff).toISOString();
-    const isRecent = lastId > (rows[rows.length - 1]?.id ?? 0) - 50;
+    const lastId = msgs[msgs.length - 1].id;
+    // Considera ativa se está entre as últimas 50 mensagens globais
+    const isRecent = lastId > lastGlobalId - 50;
 
     return {
       session_id,
-      clientName: session_id,
+      clientName: formatClientName(session_id),
       status: isRecent ? "ativa" : "concluida",
-      lastMessage: estimatedTime,
+      lastMessage: null, // n8n_chat_histories não tem created_at
       messages: msgs.map((m) => ({
         id: String(m.id),
         from: m.message.type === "human" ? "cliente" : "agente",
         text: m.message.content ?? "",
-        at: estimatedTime,
+        at: null, // sem timestamp no banco
       })),
     };
   });
