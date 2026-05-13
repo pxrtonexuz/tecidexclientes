@@ -16,15 +16,19 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
   const isNeutral = change === 0;
 
   return (
-    <div className="glass-card p-5 flex flex-col gap-3">
+    <div className="glass-card p-5 flex min-h-[132px] flex-col justify-between gap-4">
       <div className="flex items-start justify-between relative z-[1]">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground leading-tight">
           {title}
         </p>
         {icon && (
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground shrink-0"
-            style={{ background: "rgba(255, 255, 255, 0.085)", border: "1px solid rgba(255, 255, 255, 0.10)" }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#39d98a] shrink-0"
+            style={{
+              background: "rgba(57, 217, 138, 0.09)",
+              border: "1px solid rgba(57, 217, 138, 0.18)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
+            }}
           >
             {icon}
           </div>
@@ -35,7 +39,7 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
         <div>
           <span
             className={cn(
-              "text-2xl font-bold tracking-tight",
+              "text-[1.85rem] font-bold leading-none tracking-normal",
               highlight === "success" && "text-[#39d98a]",
               highlight === "danger" && "text-destructive",
               !highlight && "text-foreground"

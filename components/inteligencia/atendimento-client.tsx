@@ -6,15 +6,6 @@ import type { AtendimentoData } from "@/app/actions/inteligencia";
 const days = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}h`);
 
-const glassCard: React.CSSProperties = {
-  background: "rgba(255, 255, 255, 0.045)",
-  backdropFilter: "blur(22px) saturate(160%)",
-  WebkitBackdropFilter: "blur(22px) saturate(160%)",
-  border: "1px solid rgba(255, 255, 255, 0.12)",
-  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
-  borderRadius: "16px",
-};
-
 function heatColor(value: number, maxValue: number) {
   if (value === 0 || maxValue === 0) return "rgba(255, 255, 255, 0.04)";
   const ratio = value / maxValue;
@@ -26,7 +17,7 @@ function heatColor(value: number, maxValue: number) {
 
 function EmptyCard({ title, reason }: { title: string; reason: string }) {
   return (
-    <div style={glassCard} className="p-5 flex flex-col gap-3 min-h-[160px] justify-center">
+    <div className="tec-panel p-5 flex flex-col gap-3 min-h-[160px] justify-center">
       <p className="text-sm font-semibold text-foreground">{title}</p>
       <p className="text-xs text-muted-foreground leading-relaxed">{reason}</p>
     </div>
@@ -37,7 +28,7 @@ export function AtendimentoClient({ data }: { data: AtendimentoData }) {
   return (
     <div className="space-y-6">
       {/* Heatmap — dado real (baseado em horário de criação dos leads) */}
-      <div style={glassCard} className="p-5">
+      <div className="tec-panel p-5">
         <p className="text-sm font-semibold text-foreground mb-1">
           Mapa de calor — Hora × Dia da semana{" "}
           <span className="text-xs font-normal text-[#39d98a] ml-1">• dados reais</span>

@@ -157,19 +157,10 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
     return "—";
   }
 
-  const glassPanel: React.CSSProperties = {
-    background: "rgba(255, 255, 255, 0.045)",
-    backdropFilter: "blur(22px) saturate(160%)",
-    WebkitBackdropFilter: "blur(22px) saturate(160%)",
-    border: "1px solid rgba(255, 255, 255, 0.12)",
-    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
-  };
-
   if (conversas.length === 0) {
     return (
       <div
-        className="flex h-[calc(100vh-12rem)] items-center justify-center rounded-[16px] text-muted-foreground"
-        style={glassPanel}
+        className="tec-panel flex h-[calc(100vh-12rem)] items-center justify-center text-muted-foreground"
       >
         Nenhuma conversa encontrada.
       </div>
@@ -177,7 +168,7 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
   }
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] gap-0 rounded-[16px] overflow-hidden" style={glassPanel}>
+    <div className="tec-panel flex h-[calc(100vh-12rem)] gap-0 overflow-hidden">
       {/* Sidebar */}
       <div
         className="w-72 shrink-0 flex flex-col"

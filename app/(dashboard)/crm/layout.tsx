@@ -4,39 +4,38 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
+const tabs = [
+  { label: "Kanban", href: "/crm/kanban" },
+  { label: "Lista de Leads", href: "/crm/leads" },
+];
+
 export default function CrmLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="p-6 space-y-6 min-h-screen">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">CRM</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Gestão de leads e oportunidades</p>
+    <div className="tec-page space-y-6">
+      <div className="tec-page-header">
+        <div>
+          <h1 className="tec-page-title">CRM</h1>
+          <p className="tec-page-description">Gestão de leads e oportunidades</p>
+        </div>
       </div>
-      <div className="flex gap-2 border-b border-border pb-0">
-        <Link
-          href="/crm/kanban"
-          className={cn(
-            "px-4 py-2 text-sm font-medium transition-colors border-b-2",
-            pathname === "/crm/kanban"
-              ? "border-primary text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Kanban
-        </Link>
-        <Link
-          href="/crm/leads"
-          className={cn(
-            "px-4 py-2 text-sm font-medium transition-colors border-b-2",
-            pathname === "/crm/leads"
-              ? "border-primary text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Lista de Leads
-        </Link>
+
+      <div className="tec-segmented">
+        {tabs.map((tab) => {
+          const active = pathname === tab.href;
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={cn("tec-segmented-item", active && "tec-segmented-item-active")}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
       </div>
+
       {children}
     </div>
   );

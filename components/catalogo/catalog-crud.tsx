@@ -24,14 +24,6 @@ export type AtributoItem = { id: string; categoria: AtributoCategory; nome: stri
 
 // ─── Shared glass styles ──────────────────────────────────────────────────────
 
-const glassTable: React.CSSProperties = {
-  background: "rgba(255, 255, 255, 0.04)",
-  backdropFilter: "blur(22px) saturate(160%)",
-  WebkitBackdropFilter: "blur(22px) saturate(160%)",
-  border: "1px solid rgba(255, 255, 255, 0.11)",
-  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
-};
-
 const glassDialog: React.CSSProperties = {
   background: "rgba(5, 12, 8, 0.96)",
   border: "1px solid rgba(57, 217, 138, 0.22)",
@@ -180,7 +172,7 @@ export function ModelosCrud({ initialModelos }: { initialModelos: ModeloRow[] })
       <div className="flex justify-end">
         <Button onClick={openNew} className="gap-2 cursor-pointer"><Plus className="w-4 h-4" /> Novo Modelo</Button>
       </div>
-      <div className="rounded-[16px] overflow-hidden" style={glassTable}>
+      <div className="tec-table-shell">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ background: "rgba(255, 255, 255, 0.06)", borderBottom: "1px solid rgba(255, 255, 255, 0.10)" }}>
@@ -281,12 +273,12 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
       <div className="flex justify-end">
         <Button onClick={openNew} className="gap-2 cursor-pointer"><Plus className="w-4 h-4" /> Novo Tecido</Button>
       </div>
-      <div className="rounded-[16px] overflow-hidden" style={glassTable}>
+      <div className="tec-table-shell">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ background: "rgba(255, 255, 255, 0.06)", borderBottom: "1px solid rgba(255, 255, 255, 0.10)" }}>
-              {["Nome", "Descrição sensorial", "Status", "Ações"].map((h, i) => (
-                <th key={h} className={cn("px-4 py-3", i === 3 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
+              {["Imagem", "Nome", "Descrição sensorial", "Status", "Ações"].map((h, i) => (
+                <th key={h} className={cn("px-4 py-3", i === 4 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -296,6 +288,18 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
                 style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(255, 255, 255, 0.045)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}>
+                <td className="px-4 py-3">
+                  <div className="h-10 w-14 overflow-hidden rounded-md border border-white/10 bg-white/[0.04]">
+                    {item.imagemUrl ? (
+                      <div
+                        className="h-full w-full bg-cover bg-center"
+                        style={{ backgroundImage: `url(${item.imagemUrl})` }}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">Sem imagem</div>
+                    )}
+                  </div>
+                </td>
                 <td className="px-4 py-3 font-medium text-foreground">{item.nome}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{item.descricaoSensorial}</td>
                 <td className="px-4 py-3">
@@ -313,7 +317,7 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
               </tr>
             ))}
             {items.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">Nenhum tecido cadastrado.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">Nenhum tecido cadastrado.</td></tr>
             )}
           </tbody>
         </table>
@@ -433,12 +437,12 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
         <Button onClick={openNew} className="gap-2 cursor-pointer"><Plus className="w-4 h-4" /> Novo Atributo</Button>
       </div>
 
-      <div className="rounded-[16px] overflow-hidden" style={glassTable}>
+      <div className="tec-table-shell">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ background: "rgba(255, 255, 255, 0.06)", borderBottom: "1px solid rgba(255, 255, 255, 0.10)" }}>
-              {["Categoria", "Nome", "Descrição", "Status", "Ações"].map((h, i) => (
-                <th key={h} className={cn("px-4 py-3", i === 4 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
+              {["Categoria", "Imagem", "Nome", "Descrição", "Status", "Ações"].map((h, i) => (
+                <th key={h} className={cn("px-4 py-3", i === 5 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -453,6 +457,18 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
                     style={{ background: "rgba(255, 255, 255, 0.09)", border: "1px solid rgba(57, 217, 138, 0.22)", color: "#39d98a" }}>
                     {item.categoria}
                   </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="h-10 w-14 overflow-hidden rounded-md border border-white/10 bg-white/[0.04]">
+                    {item.imagemUrl ? (
+                      <div
+                        className="h-full w-full bg-cover bg-center"
+                        style={{ backgroundImage: `url(${item.imagemUrl})` }}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">Sem imagem</div>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3 font-medium text-foreground">{item.nome}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{item.descricao}</td>
@@ -471,7 +487,7 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">Nenhum atributo encontrado.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Nenhum atributo encontrado.</td></tr>
             )}
           </tbody>
         </table>

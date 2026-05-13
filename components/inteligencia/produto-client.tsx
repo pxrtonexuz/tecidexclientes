@@ -19,21 +19,12 @@ const tooltipStyle = {
   backdropFilter: "blur(20px)",
 };
 
-const glassCard: React.CSSProperties = {
-  background: "rgba(255, 255, 255, 0.045)",
-  backdropFilter: "blur(22px) saturate(160%)",
-  WebkitBackdropFilter: "blur(22px) saturate(160%)",
-  border: "1px solid rgba(255, 255, 255, 0.12)",
-  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
-  borderRadius: "16px",
-};
-
 const tickStyle = { fontSize: 11, fill: "rgba(160, 210, 185, 0.65)" };
 const gridStroke = "rgba(255, 255, 255, 0.085)";
 
 function EmptyCard({ title, reason }: { title: string; reason: string }) {
   return (
-    <div style={glassCard} className="p-5 flex flex-col gap-3 min-h-[160px] justify-center">
+    <div className="tec-panel p-5 flex flex-col gap-3 min-h-[160px] justify-center">
       <p className="text-sm font-semibold text-foreground">{title}</p>
       <p className="text-xs text-muted-foreground leading-relaxed">{reason}</p>
     </div>
@@ -44,7 +35,7 @@ export function ProdutoClient({ data }: { data: ProdutoData }) {
   return (
     <div className="space-y-6">
       {/* Ranking de Modelos — dado real */}
-      <div style={glassCard} className="p-5">
+      <div className="tec-panel p-5">
         <p className="text-sm font-semibold text-foreground mb-4">
           Ranking de Modelos{" "}
           <span className="text-xs font-normal text-[#39d98a] ml-1">• dados reais</span>

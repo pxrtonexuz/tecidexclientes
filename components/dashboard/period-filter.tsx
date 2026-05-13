@@ -51,13 +51,7 @@ export function PeriodFilter({ onChange }: { onChange?: (period: Period) => void
   }
 
   return (
-    <div
-      className="flex items-center gap-1 p-1 rounded-[12px]"
-      style={{
-        background: "rgba(255, 255, 255, 0.045)",
-        border: "1px solid rgba(255, 255, 255, 0.10)",
-      }}
-    >
+    <div className="tec-segmented">
       {presets.map((p) =>
         p === "Personalizado" ? (
           <Popover key={p} open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -66,14 +60,9 @@ export function PeriodFilter({ onChange }: { onChange?: (period: Period) => void
                 <button
                   onClick={() => select(p)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] text-sm font-medium transition-all duration-180 cursor-pointer",
-                    active !== p && "text-muted-foreground hover:text-foreground"
+                    "tec-segmented-item flex items-center gap-1.5 cursor-pointer",
+                    active === p ? "tec-segmented-item-active" : "text-muted-foreground hover:text-foreground"
                   )}
-                  style={
-                    active === p
-                      ? { background: "#0f6b3f", color: "#fff", boxShadow: "0 0 14px rgba(57,217,138,0.20)" }
-                      : undefined
-                  }
                 >
                   <CalendarIcon className="w-3.5 h-3.5" />
                   {active === p && customRange?.from && customRange?.to
@@ -105,14 +94,9 @@ export function PeriodFilter({ onChange }: { onChange?: (period: Period) => void
             key={p}
             onClick={() => select(p)}
             className={cn(
-              "px-3 py-1.5 rounded-[9px] text-sm font-medium transition-all duration-180 cursor-pointer",
-              active !== p && "text-muted-foreground hover:text-foreground"
+              "tec-segmented-item cursor-pointer",
+              active === p ? "tec-segmented-item-active" : "text-muted-foreground hover:text-foreground"
             )}
-            style={
-              active === p
-                ? { background: "#0f6b3f", color: "#fff", boxShadow: "0 0 14px rgba(57,217,138,0.20)" }
-                : undefined
-            }
           >
             {p}
           </button>

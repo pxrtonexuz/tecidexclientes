@@ -74,19 +74,19 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
   const chartXInterval = Math.max(0, Math.floor(chartData.length / 7) - 1);
 
   return (
-    <div className="p-6 space-y-6 min-h-screen">
+    <div className="tec-page space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="tec-page-header">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Visão geral do desempenho do agente</p>
+          <h1 className="tec-page-title">Dashboard</h1>
+          <p className="tec-page-description">Visão geral do desempenho do agente</p>
         </div>
         <PeriodFilter onChange={setPeriod} />
       </div>
 
       {/* Status do Agente */}
       <section className="space-y-3">
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+        <h2 className="tec-section-title">
           Status do Agente
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -142,7 +142,7 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
 
       {/* Resultado Comercial */}
       <section className="space-y-3">
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+        <h2 className="tec-section-title">
           Resultado Comercial
           <span className="ml-2 text-xs font-normal normal-case opacity-60">{period.label}</span>
         </h2>
@@ -168,13 +168,9 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
       {/* Chart */}
       <section>
         <div
-          className="rounded-[16px] overflow-hidden"
+          className="tec-panel overflow-hidden"
           style={{
-            background: "rgba(255, 255, 255, 0.045)",
-            backdropFilter: "blur(22px) saturate(160%)",
-            WebkitBackdropFilter: "blur(22px) saturate(160%)",
-            border: "1px solid rgba(255, 255, 255, 0.12)",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+            animationDelay: "320ms",
           }}
         >
           <div

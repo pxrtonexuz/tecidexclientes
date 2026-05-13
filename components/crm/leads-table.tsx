@@ -176,16 +176,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
       </div>
 
       {/* Table */}
-      <div
-        className="rounded-[16px] overflow-hidden"
-        style={{
-          background: "rgba(255, 255, 255, 0.04)",
-          backdropFilter: "blur(22px) saturate(160%)",
-          WebkitBackdropFilter: "blur(22px) saturate(160%)",
-          border: "1px solid rgba(255, 255, 255, 0.11)",
-          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(57, 217, 138, 0.06)",
-        }}
-      >
+      <div className="tec-table-shell">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
