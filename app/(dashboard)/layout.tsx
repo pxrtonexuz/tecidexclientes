@@ -1,5 +1,6 @@
 import { requireTenantSession } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
+import { AutoRefresh } from "@/components/layout/auto-refresh";
 import { Toaster } from "@/components/ui/sonner";
 
 export default async function DashboardLayout({
@@ -15,6 +16,7 @@ export default async function DashboardLayout({
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>
+      <AutoRefresh intervalMs={60_000} />
       <Toaster />
     </div>
   );

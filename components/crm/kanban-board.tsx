@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -170,6 +170,12 @@ export function KanbanBoard({ initialLeads }: { initialLeads: LeadRow[] }) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads.map(rowToLead));
   const [activeId, setActiveId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+
+  // Sincroniza quando o servidor retorna dados atualizados (AutoRefresh ou navegação)
+  useEffect(() => {
+    if (activeId) return; // não interrompe drag em andamento
+    setLeads(initialLeads.map(rowToLead));
+  }, [initialLeads]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const activeLead = leads.find((l) => l.id === activeId);

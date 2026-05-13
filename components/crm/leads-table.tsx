@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -70,6 +70,11 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
   const [filterModel, setFilterModel] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [, startTransition] = useTransition();
+
+  // Sincroniza quando o servidor retorna dados atualizados (AutoRefresh ou navegação)
+  useEffect(() => {
+    setLeads(initialLeads.map(rowToDisplay));
+  }, [initialLeads]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const models = useMemo(
     () => Array.from(new Set(leads.map((l) => l.model).filter(Boolean))),

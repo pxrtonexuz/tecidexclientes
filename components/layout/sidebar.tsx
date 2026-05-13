@@ -68,12 +68,23 @@ const navItems: NavItem[] = [
 const navItemBase =
   "flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm font-medium transition-all duration-180 cursor-pointer";
 
-function NavSection({ item, collapsed, pathname }: { item: NavItem; collapsed: boolean; pathname: string }) {
+function NavSection({
+  item,
+  collapsed,
+  pathname,
+  onExpand,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  pathname: string;
+  onExpand: () => void;
+}) {
   const isActive = item.href
     ? pathname === item.href
     : item.children?.some((c) => pathname.startsWith(c.href)) ?? false;
 
   const [open, setOpen] = useState(isActive);
+  const router = useRouter();
 
   const activeStyle: React.CSSProperties = {
     background: "rgba(15, 107, 63, 0.22)",
@@ -119,14 +130,27 @@ function NavSection({ item, collapsed, pathname }: { item: NavItem; collapsed: b
   const Icon = item.icon;
 
   if (collapsed) {
+    const firstChild = item.children?.[0]?.href;
     return (
       <TooltipProvider delay={0}>
         <Tooltip>
           <TooltipTrigger
             render={
-              <div className={cn(navItemBase, "text-muted-foreground hover:text-foreground hover:bg-muted/50", isActive && "text-[#39d98a]")}>
+              <button
+                onClick={() => {
+                  onExpand();
+                  setOpen(true);
+                  if (firstChild) router.push(firstChild);
+                }}
+                className={cn(
+                  navItemBase,
+                  "text-muted-foreground hover:text-foreground hover:bg-muted/50 w-full",
+                  isActive && "text-[#39d98a]"
+                )}
+                style={isActive ? activeStyle : undefined}
+              >
                 <Icon className="w-5 h-5 shrink-0" />
-              </div>
+              </button>
             }
           />
           <TooltipContent side="right"><p>{item.label}</p></TooltipContent>
@@ -246,7 +270,13 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
         {navItems.map((item) => (
-          <NavSection key={item.label} item={item} collapsed={collapsed} pathname={pathname} />
+          <NavSection
+            key={item.label}
+            item={item}
+            collapsed={collapsed}
+            pathname={pathname}
+            onExpand={() => setCollapsed(false)}
+          />
         ))}
       </nav>
 
