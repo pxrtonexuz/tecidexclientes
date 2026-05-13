@@ -16,7 +16,7 @@ export async function getAgentConfig(): Promise<AgentConfigRow | null> {
   const { data, error } = await db
     .from("agent_config")
     .select("*")
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(1)
     .single();
   if (error || !data) return null;
@@ -95,14 +95,27 @@ export async function getChatConversations(): Promise<ConversaData[]> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
 
-  const { data, error } = await db
-    .from("n8n_chat_histories")
-    .select("id, session_id, message")
-    .order("id", { ascending: true });
+  const [histResult, pauseResult] = await Promise.all([
+    db
+      .from("n8n_chat_histories")
+      .select("id, session_id, message")
+      .order("id", { ascending: false })
+      .limit(400),
+    db
+      .from("dados_cliente")
+      .select("telefone, atendimento_ia")
+      .eq("atendimento_ia", "pause"),
+  ]);
 
-  if (error || !data) return [];
+  if (histResult.error || !histResult.data) return [];
 
-  const rows = data as RawMessage[];
+  // IDs dos telefones atualmente pausados no banco
+  const pausedPhones = new Set<string>(
+    (pauseResult.data ?? []).map((r: { telefone: string }) => r.telefone)
+  );
+
+  // Vem em ordem DESC — inverte para ordem cronológica por conversa
+  const rows = (histResult.data as RawMessage[]).reverse();
 
   const grouped = new Map<string, RawMessage[]>();
   for (const row of rows) {
@@ -110,23 +123,24 @@ export async function getChatConversations(): Promise<ConversaData[]> {
     grouped.get(row.session_id)!.push(row);
   }
 
-  const lastGlobalId = rows[rows.length - 1]?.id ?? 0;
+  const maxId = rows[rows.length - 1]?.id ?? 0;
 
   return Array.from(grouped.entries()).map(([session_id, msgs]) => {
     const lastId = msgs[msgs.length - 1].id;
-    // Considera ativa se está entre as últimas 50 mensagens globais
-    const isRecent = lastId > lastGlobalId - 50;
+    const isRecent = lastId > maxId - 50;
+    const phone = extractPhone(session_id);
+    const isPaused = pausedPhones.has(phone);
 
     return {
       session_id,
       clientName: formatClientName(session_id),
-      status: isRecent ? "ativa" : "concluida",
-      lastMessage: null, // n8n_chat_histories não tem created_at
+      status: isPaused ? "pausada" : isRecent ? "ativa" : "concluida",
+      lastMessage: null,
       messages: msgs.map((m) => ({
         id: String(m.id),
         from: m.message.type === "human" ? "cliente" : "agente",
         text: m.message.content ?? "",
-        at: null, // sem timestamp no banco
+        at: null,
       })),
     };
   });

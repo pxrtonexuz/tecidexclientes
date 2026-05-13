@@ -19,6 +19,19 @@ type RawHistoryRow = {
   message: { type: "human" | "ai"; content: string };
 };
 
+function formatPhone(sessionId: string): string {
+  const digits = sessionId.split("@")[0].replace(/\D/g, "");
+  if (digits.length === 13 && digits.startsWith("55")) {
+    const local = digits.slice(2);
+    return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  }
+  if (digits.length === 12 && digits.startsWith("55")) {
+    const local = digits.slice(2);
+    return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+  }
+  return sessionId.split("@")[0];
+}
+
 const statusColors: Record<ConversaStatus, string> = {
   ativa: "bg-[#39d98a]/15 text-[#39d98a] border-[#39d98a]/20",
   pausada: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
@@ -82,7 +95,7 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
             return [
               {
                 session_id: row.session_id,
-                clientName: row.session_id.split("@")[0],
+                clientName: formatPhone(row.session_id),
                 status: "ativa" as ConversaStatus,
                 lastMessage: new Date().toISOString(),
                 messages: [msg],
@@ -119,6 +132,7 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
     if (!conversa) return;
 
     const pausando = conversa.status !== "pausada";
+    const previousStatus = conversa.status;
     setPausing(session_id);
 
     setConversas((prev) =>
@@ -135,6 +149,13 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
       } else {
         await reativarConversaIA(session_id);
       }
+    } catch {
+      // Reverte estado otimista se o servidor falhar
+      setConversas((prev) =>
+        prev.map((c) =>
+          c.session_id === session_id ? { ...c, status: previousStatus, pausedAt: undefined } : c
+        )
+      );
     } finally {
       setPausing(null);
     }

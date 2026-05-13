@@ -45,8 +45,8 @@ export function SaudeClient({ initialConfig, companyName, completude }: Props) {
     },
     {
       label: "Completude do fluxo (chegaram ao fechamento)",
-      score: Math.round((completude / 100) * 15),
-      maxScore: 15,
+      score: Math.round(completude),
+      maxScore: 100,
       detail: `${completude.toFixed(1)}% dos leads chegaram ao pedido fechado ou venda concluída`,
     },
   ];
@@ -134,7 +134,7 @@ export function SaudeClient({ initialConfig, companyName, completude }: Props) {
       <div className="space-y-2">
         <HealthGauge score={Math.round(completude)} components={healthComponents} />
         <p className="text-xs text-muted-foreground text-center">
-          Score baseado apenas em completude de fluxo — demais métricas em desenvolvimento
+          Score atual reflete apenas completude do fluxo comercial — demais métricas em desenvolvimento
         </p>
       </div>
     </div>

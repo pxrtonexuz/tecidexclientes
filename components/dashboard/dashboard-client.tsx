@@ -59,7 +59,8 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
     const days = eachDayOfInterval({ start: period.from, end: period.to });
     return days.map((day) => {
       const dayStr = format(day, "yyyy-MM-dd");
-      const dayLeads = leads.filter((l) => l.created_at.startsWith(dayStr));
+      // Converte created_at UTC para data local antes de comparar (evita bug de timezone)
+      const dayLeads = leads.filter((l) => format(new Date(l.created_at), "yyyy-MM-dd") === dayStr);
       const dayOrders = dayLeads.filter((l) => CLOSED_STATUSES.includes(l.status));
       const dayRevenue = dayOrders.reduce((acc, l) => acc + (l.valor ?? 0), 0);
       return {
