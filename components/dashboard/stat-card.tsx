@@ -16,17 +16,17 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
   const isNeutral = change === 0;
 
   return (
-    <div className="glass-card p-5 flex min-h-[132px] flex-col justify-between gap-4">
+    <div className="glass-card p-5 flex min-h-[144px] flex-col justify-between gap-4">
       <div className="flex items-start justify-between relative z-[1]">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground leading-tight">
           {title}
         </p>
         {icon && (
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#39d98a] shrink-0"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#34d582] shrink-0"
             style={{
-              background: "rgba(57, 217, 138, 0.09)",
-              border: "1px solid rgba(57, 217, 138, 0.18)",
+              background: "rgba(52, 213, 130, 0.085)",
+              border: "1px solid rgba(52, 213, 130, 0.18)",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
             }}
           >
@@ -39,20 +39,20 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
         <div>
           <span
             className={cn(
-              "text-[1.85rem] font-bold leading-none tracking-normal",
-              highlight === "success" && "text-[#39d98a]",
+              "text-[1.75rem] font-bold leading-none tracking-normal",
+              highlight === "success" && "text-[#34d582]",
               highlight === "danger" && "text-destructive",
               !highlight && "text-foreground"
             )}
             style={
               highlight === "success"
-                ? { textShadow: "0 0 12px rgba(57, 217, 138, 0.4)" }
+                ? { textShadow: "0 0 12px rgba(52, 213, 130, 0.34)" }
                 : undefined
             }
           >
             {value}
           </span>
-          {suffix && <span className="ml-1 text-sm text-muted-foreground">{suffix}</span>}
+          {suffix && <p className="mt-1 text-sm text-muted-foreground">{suffix}</p>}
         </div>
 
         {hasChange && (
@@ -62,14 +62,14 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
               isNeutral
                 ? "text-muted-foreground"
                 : isPositive
-                ? "text-[#39d98a]"
+                ? "text-[#34d582]"
                 : "text-red-400"
             )}
             style={
               isNeutral
                 ? { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }
                 : isPositive
-                ? { background: "rgba(57, 217, 138, 0.12)", border: "1px solid rgba(57, 217, 138, 0.25)" }
+                ? { background: "rgba(52, 213, 130, 0.11)", border: "1px solid rgba(52, 213, 130, 0.24)" }
                 : { background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.25)" }
             }
           >

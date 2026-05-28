@@ -264,7 +264,7 @@ export function ModelosCrud({ initialModelos }: { initialModelos: ModeloRow[] })
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Switch checked={item.ativo} onCheckedChange={() => toggleAtivo(item)} />
-                    <span className={cn("text-xs", item.ativo ? "text-[#39d98a]" : "text-muted-foreground")}>
+                    <span className={cn("text-xs", item.ativo ? "text-[#34d582]" : "text-muted-foreground")}>
                       {item.ativo ? "Ativo" : "Inativo"}
                     </span>
                   </div>
@@ -377,7 +377,7 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
                   <ColorChips colors={item.coresDisponiveis} />
                 </td>
                 <td className="px-4 py-3">
-                  <Badge className={cn("text-xs border", item.ativo ? "bg-[#39d98a]/15 text-[#39d98a] border-[#39d98a]/20" : "bg-muted text-muted-foreground border-border")}>
+                  <Badge className={cn("text-xs border", item.ativo ? "bg-[#34d582]/15 text-[#34d582] border-[#34d582]/20" : "bg-muted text-muted-foreground border-border")}>
                     {item.ativo ? "Ativo" : "Inativo"}
                   </Badge>
                 </td>
@@ -517,7 +517,7 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
               onClick={() => setActiveCategory(cat)}
               className={cn("px-3 py-1.5 rounded-[9px] text-xs font-medium transition-all duration-180 cursor-pointer",
                 activeCategory !== cat && "text-muted-foreground hover:text-foreground")}
-              style={activeCategory === cat ? { background: "#0f6b3f", color: "#fff", boxShadow: "0 0 10px rgba(57,217,138,0.20)" } : undefined}
+              style={activeCategory === cat ? { background: "#16a35f", color: "#fff", boxShadow: "0 0 10px rgba(57,217,138,0.20)" } : undefined}
             >
               {cat === "all" ? "Todos" : cat}
             </button>
@@ -543,7 +543,7 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
                 onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}>
                 <td className="px-4 py-3">
                   <span className="px-2 py-0.5 rounded-full text-xs font-medium"
-                    style={{ background: "rgba(255, 255, 255, 0.09)", border: "1px solid rgba(57, 217, 138, 0.22)", color: "#39d98a" }}>
+                    style={{ background: "rgba(255, 255, 255, 0.09)", border: "1px solid rgba(57, 217, 138, 0.22)", color: "#34d582" }}>
                     {item.categoria}
                   </span>
                 </td>
@@ -553,7 +553,7 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
                 <td className="px-4 py-3 font-medium text-foreground">{item.nome}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{item.descricao}</td>
                 <td className="px-4 py-3">
-                  <Badge className={cn("text-xs border", item.ativo ? "bg-[#39d98a]/15 text-[#39d98a] border-[#39d98a]/20" : "bg-muted text-muted-foreground border-border")}>
+                  <Badge className={cn("text-xs border", item.ativo ? "bg-[#34d582]/15 text-[#34d582] border-[#34d582]/20" : "bg-muted text-muted-foreground border-border")}>
                     {item.ativo ? "Ativo" : "Inativo"}
                   </Badge>
                 </td>

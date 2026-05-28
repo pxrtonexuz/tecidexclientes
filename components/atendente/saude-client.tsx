@@ -75,14 +75,14 @@ export function SaudeClient({ initialConfig, companyName, completude }: Props) {
                 className={cn(
                   "text-xs border",
                   agentActive
-                    ? "bg-[#39d98a]/15 text-[#39d98a] border-[#39d98a]/20"
+                    ? "bg-[#34d582]/15 text-[#34d582] border-[#34d582]/20"
                     : "bg-red-500/15 text-red-400 border-red-500/20"
                 )}
               >
                 <span
                   className={cn(
                     "w-1.5 h-1.5 rounded-full mr-1.5 inline-block",
-                    agentActive ? "bg-[#39d98a] animate-pulse" : "bg-red-400"
+                    agentActive ? "bg-[#34d582] animate-pulse" : "bg-red-400"
                   )}
                 />
                 {agentActive ? "Ativo" : "Inativo"}
@@ -113,7 +113,7 @@ export function SaudeClient({ initialConfig, companyName, completude }: Props) {
             onClick={handleToggle}
             disabled={toggling || !config}
             variant={agentActive ? "destructive" : "default"}
-            className={cn("gap-2 cursor-pointer shrink-0", !agentActive && "bg-[#0f6b3f] hover:bg-[#15834f]")}
+            className={cn("gap-2 cursor-pointer shrink-0", !agentActive && "bg-[#16a35f] hover:bg-[#18a966]")}
           >
             <Power className="w-4 h-4" />
             {toggling ? "Aguarde..." : agentActive ? "Desligar" : "Ligar"}

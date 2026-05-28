@@ -33,7 +33,7 @@ function formatPhone(sessionId: string): string {
 }
 
 const statusColors: Record<ConversaStatus, string> = {
-  ativa: "bg-[#39d98a]/15 text-[#39d98a] border-[#39d98a]/20",
+  ativa: "bg-[#34d582]/15 text-[#34d582] border-[#34d582]/20",
   pausada: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
   concluida: "bg-muted text-muted-foreground border-border",
 };
@@ -202,8 +202,8 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
         >
           <span className="text-xs text-muted-foreground">{conversas.length} conversas</span>
           <div className="flex items-center gap-1.5">
-            <Wifi className={cn("w-3 h-3", realtimeOk ? "text-[#39d98a]" : "text-muted-foreground")} />
-            <span className={cn("text-xs", realtimeOk ? "text-[#39d98a]" : "text-muted-foreground")}>
+            <Wifi className={cn("w-3 h-3", realtimeOk ? "text-[#34d582]" : "text-muted-foreground")} />
+            <span className={cn("text-xs", realtimeOk ? "text-[#34d582]" : "text-muted-foreground")}>
               {realtimeOk ? "Ao vivo" : "Conectando..."}
             </span>
           </div>
@@ -219,7 +219,7 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
                 "flex-1 text-xs py-1.5 rounded-[8px] font-medium cursor-pointer transition-all duration-180",
                 filter === f ? "text-white" : "text-muted-foreground hover:text-foreground"
               )}
-              style={filter === f ? { background: "#0f6b3f", boxShadow: "0 0 10px rgba(57,217,138,0.20)" } : undefined}
+              style={filter === f ? { background: "#16a35f", boxShadow: "0 0 10px rgba(57,217,138,0.20)" } : undefined}
             >
               {f === "all" ? "Todas" : f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
@@ -341,7 +341,7 @@ export function ChatClient({ initialConversas, tenantUrl, tenantAnonKey }: Props
                               color: "var(--foreground)",
                               borderRadius: "18px 18px 18px 4px",
                             }
-                          : { background: "#0f6b3f", color: "#fff", borderRadius: "18px 18px 4px 18px" }
+                          : { background: "#16a35f", color: "#fff", borderRadius: "18px 18px 4px 18px" }
                       }
                     >
                       {msg.text}

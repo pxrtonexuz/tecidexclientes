@@ -48,7 +48,7 @@ export function FinanceiroClient({ data }: { data: FinanceiroData }) {
       <div className="tec-panel p-5">
         <p className="text-sm font-semibold text-foreground mb-1">
           Evolução do Ticket Médio{" "}
-          <span className="text-xs font-normal text-[#39d98a] ml-1">• dados reais</span>
+          <span className="text-xs font-normal text-[#34d582] ml-1">• dados reais</span>
         </p>
         <p className="text-xs text-muted-foreground mb-4">Últimos 30 dias</p>
         {data.ticketEvolucao.some((d) => d.ticket > 0) ? (
@@ -75,10 +75,10 @@ export function FinanceiroClient({ data }: { data: FinanceiroData }) {
               <Line
                 type="monotone"
                 dataKey="ticket"
-                stroke="#39d98a"
+                stroke="#34d582"
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, fill: "#39d98a", stroke: "rgba(57, 217, 138, 0.3)", strokeWidth: 4 }}
+                activeDot={{ r: 4, fill: "#34d582", stroke: "rgba(57, 217, 138, 0.3)", strokeWidth: 4 }}
                 style={{ filter: "drop-shadow(0 0 6px rgba(57, 217, 138, 0.5))" }}
               />
             </LineChart>
@@ -94,7 +94,7 @@ export function FinanceiroClient({ data }: { data: FinanceiroData }) {
       <div className="tec-panel p-5">
         <p className="text-sm font-semibold text-foreground mb-1">
           Faturamento por Modelo{" "}
-          <span className="text-xs font-normal text-[#39d98a] ml-1">• dados reais</span>
+          <span className="text-xs font-normal text-[#34d582] ml-1">• dados reais</span>
         </p>
         {data.faturamentoPorModelo.length > 0 ? (
           <table className="w-full text-sm mt-4">
@@ -126,7 +126,7 @@ export function FinanceiroClient({ data }: { data: FinanceiroData }) {
                 >
                   <td className="py-3 font-medium text-foreground">{r.modelo}</td>
                   <td className="py-3 text-right text-muted-foreground">{r.pedidos}</td>
-                  <td className="py-3 text-right font-semibold" style={{ color: "#39d98a" }}>
+                  <td className="py-3 text-right font-semibold" style={{ color: "#34d582" }}>
                     R$ {r.faturamento.toLocaleString("pt-BR")}
                   </td>
                   <td className="py-3 text-right text-muted-foreground">

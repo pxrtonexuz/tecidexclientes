@@ -31,7 +31,7 @@ export function AtendimentoClient({ data }: { data: AtendimentoData }) {
       <div className="tec-panel p-5">
         <p className="text-sm font-semibold text-foreground mb-1">
           Mapa de calor — Hora × Dia da semana{" "}
-          <span className="text-xs font-normal text-[#39d98a] ml-1">• dados reais</span>
+          <span className="text-xs font-normal text-[#34d582] ml-1">• dados reais</span>
         </p>
         <p className="text-xs text-muted-foreground mb-4">
           Baseado no horário de entrada dos leads ({data.totalLeads} total)

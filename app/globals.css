@@ -10,8 +10,8 @@
   :root {
     /* Tecidex command-center dark theme */
     --background: #05070c;
-    --foreground: #f7fff9;
-    --card: #0c111a;
+    --foreground: #f8fbf8;
+    --card: #0b1018;
     --card-foreground: #f4fff8;
     --popover: #0d121c;
     --popover-foreground: #f4fff8;
@@ -20,7 +20,7 @@
     --secondary: #111821;
     --secondary-foreground: #f4fff8;
     --muted: #101722;
-    --muted-foreground: #96a3ad;
+    --muted-foreground: #99a4ad;
     --accent: #12271d;
     --accent-foreground: #f4fff8;
     --destructive: oklch(0.637 0.237 25.331);
@@ -36,20 +36,20 @@
     --chart-5: #38bdf8;
     --sidebar: #080b13;
     --sidebar-foreground: #f4fff8;
-    --sidebar-primary: #39d98a;
+    --sidebar-primary: #34d582;
     --sidebar-primary-foreground: #ffffff;
     --sidebar-accent: rgba(255, 255, 255, 0.06);
     --sidebar-accent-foreground: #f4fff8;
     --sidebar-border: rgba(255, 255, 255, 0.09);
-    --sidebar-ring: #39d98a;
+    --sidebar-ring: #34d582;
 
     /* Tecidex glass tokens */
     --glass-surface: rgba(255, 255, 255, 0.035);
     --glass-surface-hover: rgba(255, 255, 255, 0.055);
     --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-border-bright: rgba(52, 213, 130, 0.32);
-    --glass-glow: rgba(52, 213, 130, 0.10);
-    --glass-glow-strong: rgba(52, 213, 130, 0.20);
+    --glass-border-bright: rgba(52, 213, 130, 0.26);
+    --glass-glow: rgba(52, 213, 130, 0.075);
+    --glass-glow-strong: rgba(52, 213, 130, 0.16);
     --brand-deep: #0a3320;
     --brand: #16a35f;
     --accent-bright: #34d582;
@@ -87,13 +87,13 @@
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.025); }
   ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(57, 217, 138, 0.36); }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(52, 213, 130, 0.34); }
 }
 
 @layer components {
   .tec-page {
     min-height: 100vh;
-    padding: 2.75rem 3rem;
+    padding: 2.25rem 2.75rem;
   }
 
   .tec-page-header {
@@ -106,8 +106,8 @@
 
   .tec-page-title {
     color: var(--foreground);
-    font-size: 2rem;
-    line-height: 2.35rem;
+    font-size: 1.75rem;
+    line-height: 2.15rem;
     font-weight: 700;
   }
 
@@ -124,15 +124,15 @@
     gap: 0.25rem;
     width: fit-content;
     padding: 0.25rem;
-    border-radius: var(--radius-md);
+    border-radius: 14px;
     background: rgba(255, 255, 255, 0.045);
     border: 1px solid rgba(255, 255, 255, 0.10);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
   }
 
   .tec-segmented-item {
-    border-radius: 9px;
-    padding: 0.375rem 1rem;
+    border-radius: 11px;
+    padding: 0.45rem 1.15rem;
     color: var(--muted-foreground);
     font-size: 0.875rem;
     line-height: 1.25rem;
@@ -145,29 +145,29 @@
   }
 
   .tec-segmented-item-active {
-    background: var(--brand);
+    background: #18a966;
     color: #fff;
-    box-shadow: 0 0 14px rgba(57, 217, 138, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    box-shadow: 0 0 14px rgba(52, 213, 130, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.14);
   }
 
   .tec-panel {
-    background: rgba(13, 18, 28, 0.74);
+    background: rgba(12, 17, 26, 0.82);
     backdrop-filter: blur(var(--blur-glass)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.075);
-    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.078);
+    border-radius: 16px;
     box-shadow:
-      0 18px 44px rgba(0, 0, 0, 0.24),
+      0 16px 38px rgba(0, 0, 0, 0.22),
       inset 0 1px 0 rgba(255, 255, 255, 0.035);
   }
 
   .tec-table-shell {
     overflow: hidden;
     border-radius: var(--radius-lg);
-    background: rgba(13, 18, 28, 0.76);
+    background: rgba(12, 17, 26, 0.82);
     backdrop-filter: blur(var(--blur-glass)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.075);
+    border: 1px solid rgba(255, 255, 255, 0.078);
     box-shadow:
       0 14px 36px rgba(0, 0, 0, 0.32),
       inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -183,14 +183,14 @@
   }
 
   .glass-card {
-    background: rgba(13, 18, 28, 0.78);
+    background: rgba(12, 17, 26, 0.84);
     backdrop-filter: blur(var(--blur-glass)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(150%);
     border: 1px solid var(--glass-border);
     outline: 1px solid rgba(0, 0, 0, 0.24);
-    border-radius: 18px;
+    border-radius: 16px;
     box-shadow:
-      0 16px 36px rgba(0, 0, 0, 0.23),
+      0 14px 34px rgba(0, 0, 0, 0.22),
       inset 0 1px 0 rgba(255, 255, 255, 0.035);
     transition: var(--transition-med);
     position: relative;
@@ -199,10 +199,10 @@
   }
 
   .glass-card:hover {
-    background: rgba(16, 23, 34, 0.86);
+    background: rgba(15, 22, 32, 0.9);
     border-color: var(--glass-border-bright);
     box-shadow:
-      0 20px 52px rgba(0, 0, 0, 0.28),
+      0 18px 46px rgba(0, 0, 0, 0.28),
       inset 0 1px 0 rgba(255, 255, 255, 0.055),
       0 0 26px var(--glass-glow);
     transform: translateY(-1px);

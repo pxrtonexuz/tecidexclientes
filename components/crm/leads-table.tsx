@@ -31,8 +31,8 @@ const statusLabels: Record<KanbanStatus, string> = {
 const statusStyles: Record<KanbanStatus, React.CSSProperties> = {
   em_atendimento:  { background: "rgba(56, 189, 248, 0.12)", border: "1px solid rgba(56, 189, 248, 0.25)", color: "#38bdf8" },
   montando_pedido: { background: "rgba(129, 140, 248, 0.12)", border: "1px solid rgba(129, 140, 248, 0.25)", color: "#818cf8" },
-  pedido_fechado:  { background: "rgba(57, 217, 138, 0.12)", border: "1px solid rgba(57, 217, 138, 0.28)", color: "#39d98a" },
-  venda_concluida: { background: "rgba(57, 217, 138, 0.15)", border: "1px solid rgba(57, 217, 138, 0.35)", color: "#39d98a" },
+  pedido_fechado:  { background: "rgba(57, 217, 138, 0.12)", border: "1px solid rgba(57, 217, 138, 0.28)", color: "#34d582" },
+  venda_concluida: { background: "rgba(57, 217, 138, 0.15)", border: "1px solid rgba(57, 217, 138, 0.35)", color: "#34d582" },
   sem_resposta:    { background: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(245, 158, 11, 0.25)", color: "#f59e0b" },
   perdido:         { background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.25)", color: "#ef4444" },
 };
@@ -296,7 +296,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                     className="w-7 h-7 rounded-lg text-xs font-medium cursor-pointer transition-all duration-180"
                     style={
                       page === p
-                        ? { background: "#0f6b3f", color: "#fff", boxShadow: "0 0 10px rgba(57,217,138,0.20)" }
+                        ? { background: "#16a35f", color: "#fff", boxShadow: "0 0 10px rgba(57,217,138,0.20)" }
                         : { background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.10)", color: "var(--muted-foreground)" }
                     }
                   >

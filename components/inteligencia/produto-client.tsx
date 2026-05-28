@@ -38,7 +38,7 @@ export function ProdutoClient({ data }: { data: ProdutoData }) {
       <div className="tec-panel p-5">
         <p className="text-sm font-semibold text-foreground mb-4">
           Ranking de Modelos{" "}
-          <span className="text-xs font-normal text-[#39d98a] ml-1">• dados reais</span>
+          <span className="text-xs font-normal text-[#34d582] ml-1">• dados reais</span>
         </p>
         {data.modelRanking.length > 0 ? (
           <ResponsiveContainer width="100%" height={Math.max(180, data.modelRanking.length * 36)}>
@@ -64,7 +64,7 @@ export function ProdutoClient({ data }: { data: ProdutoData }) {
               />
               <Bar
                 dataKey="pedidos"
-                fill="#39d98a"
+                fill="#34d582"
                 radius={[0, 6, 6, 0]}
                 style={{ filter: "drop-shadow(0 0 6px rgba(57, 217, 138, 0.4))" }}
               />

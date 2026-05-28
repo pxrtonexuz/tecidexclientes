@@ -80,38 +80,38 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
   const todayLabel = format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR });
 
   return (
-    <div className="tec-page space-y-7">
+    <div className="tec-page space-y-6">
       <section
-        className="overflow-hidden rounded-[22px] border border-white/10 p-8 shadow-[0_28px_80px_rgba(0,0,0,0.32)]"
+        className="overflow-hidden rounded-[22px] border border-white/10 p-7 shadow-[0_26px_70px_rgba(0,0,0,0.28)]"
         style={{
           background:
-            "linear-gradient(120deg, rgba(13,18,28,0.96) 0%, rgba(13,18,28,0.92) 48%, rgba(22,163,95,0.28) 100%)",
+            "linear-gradient(120deg, rgba(10,14,22,0.98) 0%, rgba(11,18,25,0.96) 52%, rgba(8,66,43,0.62) 100%)",
         }}
       >
-        <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_minmax(520px,0.68fr)]">
+        <div className="grid items-center gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(560px,0.78fr)]">
           <div>
             <div className="mb-4 flex items-center gap-2 text-sm font-semibold capitalize text-[#34d582]">
               <Sparkles className="h-4 w-4" />
               {todayLabel}
             </div>
-            <h1 className="max-w-4xl text-5xl font-bold leading-[1.02] text-foreground lg:text-6xl 2xl:text-7xl">
+            <h1 className="max-w-5xl text-4xl font-bold leading-[1.08] text-foreground lg:text-5xl 2xl:text-[3.55rem]">
               Bom dia, Tecidex. <span className="text-[#8df0b8]">Tudo sob controle.</span>
             </h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground">
+            <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground lg:text-lg">
               Uma visao rapida do atendimento, funil comercial e resultados que mostram o pulso da operacao.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 self-center">
+          <div className="grid grid-cols-2 gap-3">
             {[
               ["Leads no periodo", totalLeads],
               ["Pedidos", pedidosConfirmados],
               ["Conversao", `${taxaConversao.toFixed(1)}%`],
               ["Faturamento", faturamento > 0 ? `R$ ${faturamento.toLocaleString("pt-BR")}` : "R$ 0"],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-xl border border-white/10 bg-white/[0.045] p-4">
+              <div key={label} className="min-h-[112px] rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                 <p className="text-sm text-muted-foreground">{label}</p>
-                <p className="mt-3 text-2xl font-bold text-foreground">{value}</p>
+                <p className="mt-5 text-2xl font-bold text-foreground">{value}</p>
               </div>
             ))}
           </div>
@@ -130,23 +130,23 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-4">
         <div
-          className="glass-card flex min-h-[168px] flex-col justify-between p-6 text-white"
+          className="glass-card flex min-h-[144px] flex-col justify-between p-5 text-white"
           style={{
-            background: "linear-gradient(135deg, #1fb96e 0%, #12884f 52%, #0a5f38 100%)",
-            borderColor: "rgba(141, 240, 184, 0.26)",
+            background: "linear-gradient(135deg, #1aa461 0%, #117345 54%, #083a25 100%)",
+            borderColor: "rgba(141, 240, 184, 0.22)",
           }}
         >
           <div className="flex items-start justify-between">
-            <p className="text-lg font-semibold">Comercial do mes</p>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/12">
+            <p className="text-base font-semibold leading-tight">Comercial do mes</p>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
               <MessageSquare className="h-5 w-5" />
             </div>
           </div>
           <div>
-            <p className="text-4xl font-bold">{pedidosConfirmados}</p>
-            <p className="mt-2 text-sm font-semibold text-white/90">pedidos confirmados</p>
+            <p className="text-3xl font-bold">{pedidosConfirmados}</p>
+            <p className="mt-1 text-sm font-semibold text-white/85">pedidos confirmados</p>
           </div>
-          <p className="text-sm font-medium text-white/90">{totalLeads} leads no periodo</p>
+          <p className="text-sm font-medium text-white/80">{totalLeads} leads no periodo</p>
         </div>
 
         <StatCard
@@ -164,10 +164,10 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="tec-panel overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-5" style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.075)" }}>
+          <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4" style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.075)" }}>
             <div>
               <p className="tec-section-title text-[#34d582]">Comercial</p>
-              <h3 className="mt-1 text-2xl font-bold text-foreground">Performance do periodo</h3>
+              <h3 className="mt-1 text-xl font-bold text-foreground">Performance do periodo</h3>
             </div>
             <div className="flex gap-1 rounded-xl border border-white/10 bg-white/[0.035] p-1">
               {(Object.keys(metricConfig) as ChartMetric[]).map((item) => (
@@ -186,7 +186,7 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
             </div>
           </div>
           <div className="p-5">
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="tecidexGrad" x1="0" y1="0" x2="0" y2="1">

@@ -74,8 +74,8 @@ type LocalConversa = Omit<ConversaData, "status" | "messages"> & {
 const columns = [
   { id: "em_atendimento", label: "Em atendimento", accent: "#38bdf8", glow: "rgba(56, 189, 248, 0.18)" },
   { id: "montando_pedido", label: "Montando pedido", accent: "#818cf8", glow: "rgba(129, 140, 248, 0.18)" },
-  { id: "pedido_fechado", label: "Pedido fechado", accent: "#39d98a", glow: "rgba(57, 217, 138, 0.25)" },
-  { id: "venda_concluida", label: "Venda concluida", accent: "#39d98a", glow: "rgba(57, 217, 138, 0.30)" },
+  { id: "pedido_fechado", label: "Pedido fechado", accent: "#34d582", glow: "rgba(57, 217, 138, 0.25)" },
+  { id: "venda_concluida", label: "Venda concluida", accent: "#34d582", glow: "rgba(57, 217, 138, 0.30)" },
   { id: "sem_resposta", label: "Sem resposta", accent: "#f59e0b", glow: "rgba(245, 158, 11, 0.18)" },
   { id: "perdido", label: "Perdido", accent: "#ef4444", glow: "rgba(239, 68, 68, 0.18)" },
 ] as const;
@@ -85,7 +85,7 @@ type LeadStatus = (typeof columns)[number]["id"];
 const statusLabels = Object.fromEntries(columns.map((column) => [column.id, column.label])) as Record<LeadStatus, string>;
 
 const conversaStatusStyles: Record<ConversaStatus, string> = {
-  ativa: "bg-[#39d98a]/15 text-[#39d98a] border-[#39d98a]/20",
+  ativa: "bg-[#34d582]/15 text-[#34d582] border-[#34d582]/20",
   pausada: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
   concluida: "bg-muted text-muted-foreground border-border",
 };
@@ -164,7 +164,7 @@ function ConnectionPanel({ connected, realtimeOk }: { connected: boolean; realti
     <div className="grid gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[180px_minmax(0,1fr)]">
       <div className="flex h-44 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
         {connected ? (
-          <div className="flex flex-col items-center gap-2 text-[#39d98a]">
+          <div className="flex flex-col items-center gap-2 text-[#34d582]">
             <CheckCircle2 className="h-10 w-10" />
             <span className="text-xs font-semibold uppercase tracking-widest">Conectado</span>
           </div>
@@ -184,7 +184,7 @@ function ConnectionPanel({ connected, realtimeOk }: { connected: boolean; realti
       </div>
       <div className="flex flex-col justify-center">
         <div className="mb-3 flex items-center gap-2">
-          <QrCode className="h-5 w-5 text-[#39d98a]" />
+          <QrCode className="h-5 w-5 text-[#34d582]" />
           <p className="text-sm font-semibold text-foreground">WhatsApp da operacao</p>
         </div>
         <h2 className="text-xl font-semibold text-foreground">
@@ -196,10 +196,10 @@ function ConnectionPanel({ connected, realtimeOk }: { connected: boolean; realti
             : "Este bloco ja reserva o lugar do QR Code. Para exibir o QR real, falta plugar o endpoint da instancia WhatsApp/UazAPI ou n8n que retorna status e codigo de conexao."}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Badge className={cn("border", connected ? "border-[#39d98a]/20 bg-[#39d98a]/15 text-[#39d98a]" : "border-yellow-500/20 bg-yellow-500/15 text-yellow-400")}>
+          <Badge className={cn("border", connected ? "border-[#34d582]/20 bg-[#34d582]/15 text-[#34d582]" : "border-yellow-500/20 bg-yellow-500/15 text-yellow-400")}>
             {connected ? "WhatsApp conectado" : "Aguardando QR real"}
           </Badge>
-          <Badge className={cn("border", realtimeOk ? "border-[#39d98a]/20 bg-[#39d98a]/15 text-[#39d98a]" : "border-border bg-muted text-muted-foreground")}>
+          <Badge className={cn("border", realtimeOk ? "border-[#34d582]/20 bg-[#34d582]/15 text-[#34d582]" : "border-border bg-muted text-muted-foreground")}>
             {realtimeOk ? "Realtime ativo" : "Realtime conectando"}
           </Badge>
         </div>
@@ -220,7 +220,7 @@ function ContactInfoSheet({
   const lead = contact?.lead;
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="border-white/10 bg-[#05120c] text-foreground sm:max-w-md">
+      <SheetContent className="border-white/10 bg-[#080b13] text-foreground sm:max-w-md">
         <SheetHeader>
           <SheetTitle>{contact?.title ?? "Detalhes do lead"}</SheetTitle>
           <SheetDescription>Informacoes gerais do contato selecionado.</SheetDescription>
@@ -448,8 +448,8 @@ function ChatPanel({
           </div>
         </div>
         <div className="flex items-center gap-1.5 text-xs">
-          <Wifi className={cn("h-3.5 w-3.5", realtimeOk ? "text-[#39d98a]" : "text-muted-foreground")} />
-          <span className={realtimeOk ? "text-[#39d98a]" : "text-muted-foreground"}>{realtimeOk ? "Ao vivo" : "Conectando"}</span>
+          <Wifi className={cn("h-3.5 w-3.5", realtimeOk ? "text-[#34d582]" : "text-muted-foreground")} />
+          <span className={realtimeOk ? "text-[#34d582]" : "text-muted-foreground"}>{realtimeOk ? "Ao vivo" : "Conectando"}</span>
         </div>
       </header>
 
@@ -471,7 +471,7 @@ function ChatPanel({
                             border: "1px solid rgba(255, 255, 255, 0.11)",
                             borderRadius: "18px 18px 18px 4px",
                           }
-                        : { background: "#0f6b3f", color: "#fff", borderRadius: "18px 18px 4px 18px" }
+                        : { background: "#16a35f", color: "#fff", borderRadius: "18px 18px 4px 18px" }
                     }
                   >
                     {message.text}

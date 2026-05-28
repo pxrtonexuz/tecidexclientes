@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -67,6 +66,25 @@ const navItems: NavItem[] = [
 const navItemBase =
   "flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm font-medium transition-all duration-180 cursor-pointer";
 
+function TecidexMark({ collapsed }: { collapsed: boolean }) {
+  if (collapsed) {
+    return (
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.025] text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+        T
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="text-[1.32rem] font-medium uppercase tracking-[0.34em] text-white">
+        Tecidex
+      </p>
+      <div className="mt-2 h-px w-16 bg-[#34d582]/70" />
+    </div>
+  );
+}
+
 function NavSection({
   item,
   collapsed,
@@ -86,9 +104,9 @@ function NavSection({
   const router = useRouter();
 
   const activeStyle: React.CSSProperties = {
-    background: "rgba(22, 163, 95, 0.18)",
-    border: "1px solid rgba(52, 213, 130, 0.24)",
-    boxShadow: "0 8px 22px rgba(52, 213, 130, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+    background: "rgba(22, 163, 95, 0.16)",
+    border: "1px solid rgba(52, 213, 130, 0.26)",
+    boxShadow: "0 10px 26px rgba(16, 185, 129, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.055)",
     color: "#34d582",
   };
 
@@ -102,7 +120,7 @@ function NavSection({
               render={
                 <Link
                   href={item.href}
-                className={cn(navItemBase, "h-12 justify-center", !isActive && "text-muted-foreground hover:text-foreground hover:bg-white/[0.055]")}
+                  className={cn(navItemBase, "h-12 justify-center", !isActive && "text-muted-foreground hover:text-foreground hover:bg-white/[0.045]")}
                   style={isActive ? activeStyle : undefined}
                 >
                   <Icon className="w-5 h-5 shrink-0" />
@@ -117,7 +135,7 @@ function NavSection({
     return (
       <Link
         href={item.href}
-        className={cn(navItemBase, !isActive && "text-muted-foreground hover:text-foreground hover:bg-muted/50")}
+        className={cn(navItemBase, !isActive && "text-muted-foreground hover:text-foreground hover:bg-white/[0.045]")}
         style={isActive ? activeStyle : undefined}
       >
         <Icon className="w-5 h-5 shrink-0" />
@@ -143,7 +161,7 @@ function NavSection({
                 }}
                 className={cn(
                   navItemBase,
-                  "h-12 justify-center text-muted-foreground hover:text-foreground hover:bg-white/[0.055] w-full",
+                  "h-12 justify-center text-muted-foreground hover:text-foreground hover:bg-white/[0.045] w-full",
                   isActive && "text-[#34d582]"
                 )}
                 style={isActive ? activeStyle : undefined}
@@ -165,7 +183,7 @@ function NavSection({
         className={cn(
           navItemBase,
           "w-full justify-between",
-          isActive ? "text-[#39d98a]" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          isActive ? "text-[#34d582]" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.045]"
         )}
       >
         <div className="flex items-center gap-3">
@@ -186,7 +204,7 @@ function NavSection({
                   "block px-3 py-2 rounded-[8px] text-sm cursor-pointer transition-all duration-180",
                   childActive
                     ? "font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/[0.055]"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/[0.045]"
                 )}
                 style={childActive ? { color: "#34d582", background: "rgba(22,163,95,0.16)" } : undefined}
               >
@@ -216,46 +234,28 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
     <aside
       className={cn(
         "relative flex flex-col h-screen transition-all duration-300",
-        collapsed ? "w-[88px]" : "w-72"
+        collapsed ? "w-[88px]" : "w-[276px]"
       )}
       style={{
-        background: "rgba(8, 11, 19, 0.94)",
-        backdropFilter: "blur(28px) saturate(140%)",
-        WebkitBackdropFilter: "blur(28px) saturate(140%)",
-        borderRight: "1px solid rgba(255, 255, 255, 0.075)",
-        boxShadow: "8px 0 34px rgba(0, 0, 0, 0.28), inset -1px 0 0 rgba(255, 255, 255, 0.03)",
+        background: "rgba(7, 10, 17, 0.97)",
+        backdropFilter: "blur(24px) saturate(135%)",
+        WebkitBackdropFilter: "blur(24px) saturate(135%)",
+        borderRight: "1px solid rgba(255, 255, 255, 0.07)",
+        boxShadow: "8px 0 30px rgba(0, 0, 0, 0.24), inset -1px 0 0 rgba(255, 255, 255, 0.025)",
       }}
     >
       {/* Header — Tecidex logo */}
       <div
-        className="flex items-center justify-center px-4 py-5"
-        style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.09)" }}
+        className={cn("flex min-h-[104px] items-center px-6", collapsed ? "justify-center" : "justify-start")}
+        style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.07)" }}
       >
-        {!collapsed ? (
-          <Image
-            src="/LogoTecidexPlataforma.png"
-            alt="Tecidex"
-            width={132}
-            height={52}
-            className="object-contain"
-          />
-        ) : (
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.035]">
-            <Image
-              src="/LogoTecidexPlataforma.png"
-              alt="Tecidex"
-              width={34}
-              height={34}
-              className="object-contain"
-            />
-          </div>
-        )}
+        <TecidexMark collapsed={collapsed} />
       </div>
 
       {/* Toggle button */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-16 z-10 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all duration-180 hover:scale-110"
+        className="absolute -right-3 top-[100px] z-10 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all duration-180 hover:scale-110"
         style={{
           background: "rgba(10, 14, 22, 0.96)",
           border: "1px solid rgba(52, 213, 130, 0.24)",
@@ -309,7 +309,7 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
                 style={{
                   background: "rgba(255, 255, 255, 0.11)",
                   border: "1px solid rgba(57, 217, 138, 0.28)",
-                  color: "#39d98a",
+                  color: "#34d582",
                 }}
               >
                 {(companyName ?? userEmail ?? "U").charAt(0).toUpperCase()}
