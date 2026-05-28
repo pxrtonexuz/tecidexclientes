@@ -8,33 +8,33 @@
 
 @layer base {
   :root {
-    /* Tecidex premium dark theme */
-    --background: #03140d;
-    --foreground: #f4fff8;
-    --card: #071c13;
+    /* Tecidex command-center dark theme */
+    --background: #05070c;
+    --foreground: #f7fff9;
+    --card: #0c111a;
     --card-foreground: #f4fff8;
-    --popover: #06180f;
+    --popover: #0d121c;
     --popover-foreground: #f4fff8;
-    --primary: #0f6b3f;
+    --primary: #16a35f;
     --primary-foreground: #ffffff;
-    --secondary: #0b2418;
+    --secondary: #111821;
     --secondary-foreground: #f4fff8;
-    --muted: #0a2116;
-    --muted-foreground: #9fb8aa;
-    --accent: #103621;
+    --muted: #101722;
+    --muted-foreground: #96a3ad;
+    --accent: #12271d;
     --accent-foreground: #f4fff8;
     --destructive: oklch(0.637 0.237 25.331);
     --destructive-foreground: #ffffff;
     --border: rgba(255, 255, 255, 0.10);
     --input: rgba(255, 255, 255, 0.07);
-    --ring: #39d98a;
-    --radius: 0.75rem;
-    --chart-1: #39d98a;
+    --ring: #34d582;
+    --radius: 1rem;
+    --chart-1: #34d582;
     --chart-2: #f4fff8;
     --chart-3: #c6f6d5;
     --chart-4: #f59e0b;
     --chart-5: #38bdf8;
-    --sidebar: #04150d;
+    --sidebar: #080b13;
     --sidebar-foreground: #f4fff8;
     --sidebar-primary: #39d98a;
     --sidebar-primary-foreground: #ffffff;
@@ -44,16 +44,16 @@
     --sidebar-ring: #39d98a;
 
     /* Tecidex glass tokens */
-    --glass-surface: rgba(255, 255, 255, 0.045);
-    --glass-surface-hover: rgba(255, 255, 255, 0.072);
-    --glass-border: rgba(255, 255, 255, 0.095);
-    --glass-border-bright: rgba(57, 217, 138, 0.34);
-    --glass-glow: rgba(57, 217, 138, 0.11);
-    --glass-glow-strong: rgba(57, 217, 138, 0.22);
-    --brand-deep: #06351f;
-    --brand: #0f6b3f;
-    --accent-bright: #39d98a;
-    --blur-glass: 22px;
+    --glass-surface: rgba(255, 255, 255, 0.035);
+    --glass-surface-hover: rgba(255, 255, 255, 0.055);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-border-bright: rgba(52, 213, 130, 0.32);
+    --glass-glow: rgba(52, 213, 130, 0.10);
+    --glass-glow-strong: rgba(52, 213, 130, 0.20);
+    --brand-deep: #0a3320;
+    --brand: #16a35f;
+    --accent-bright: #34d582;
+    --blur-glass: 18px;
     --blur-heavy: 44px;
     --blur-light: 12px;
     --ease-liquid: cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -72,8 +72,7 @@
 
   body {
     background:
-      radial-gradient(circle at 78% 0%, rgba(15, 107, 63, 0.18), transparent 32rem),
-      radial-gradient(circle at 8% 92%, rgba(57, 217, 138, 0.08), transparent 28rem),
+      linear-gradient(180deg, rgba(8, 12, 20, 0.96), rgba(5, 7, 12, 1)),
       var(--background);
     color: var(--foreground);
     @apply antialiased;
@@ -94,7 +93,7 @@
 @layer components {
   .tec-page {
     min-height: 100vh;
-    padding: 1.5rem;
+    padding: 2.75rem 3rem;
   }
 
   .tec-page-header {
@@ -107,9 +106,9 @@
 
   .tec-page-title {
     color: var(--foreground);
-    font-size: 1.5rem;
-    line-height: 2rem;
-    font-weight: 650;
+    font-size: 2rem;
+    line-height: 2.35rem;
+    font-weight: 700;
   }
 
   .tec-page-description {
@@ -152,23 +151,23 @@
   }
 
   .tec-panel {
-    background: rgba(255, 255, 255, 0.045);
+    background: rgba(13, 18, 28, 0.74);
     backdrop-filter: blur(var(--blur-glass)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.11);
-    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.075);
+    border-radius: 18px;
     box-shadow:
-      0 14px 36px rgba(0, 0, 0, 0.32),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      0 18px 44px rgba(0, 0, 0, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.035);
   }
 
   .tec-table-shell {
     overflow: hidden;
     border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(13, 18, 28, 0.76);
     backdrop-filter: blur(var(--blur-glass)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.11);
+    border: 1px solid rgba(255, 255, 255, 0.075);
     box-shadow:
       0 14px 36px rgba(0, 0, 0, 0.32),
       inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -184,45 +183,28 @@
   }
 
   .glass-card {
-    background: var(--glass-surface);
+    background: rgba(13, 18, 28, 0.78);
     backdrop-filter: blur(var(--blur-glass)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(150%);
     border: 1px solid var(--glass-border);
     outline: 1px solid rgba(0, 0, 0, 0.24);
-    border-radius: var(--radius-md);
+    border-radius: 18px;
     box-shadow:
-      0 14px 36px rgba(0, 0, 0, 0.34),
-      0 2px 10px rgba(0, 0, 0, 0.24),
-      inset 0 1px 0 rgba(255, 255, 255, 0.055),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+      0 16px 36px rgba(0, 0, 0, 0.23),
+      inset 0 1px 0 rgba(255, 255, 255, 0.035);
     transition: var(--transition-med);
     position: relative;
     overflow: hidden;
     animation: dissolve-in 500ms var(--ease-liquid) both;
   }
 
-  .glass-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%;
-    width: 60%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.045) 50%, transparent);
-    transform: skewX(-20deg);
-    transition: left 600ms var(--ease-liquid);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .glass-card:hover::before { left: 150%; }
-
   .glass-card:hover {
-    background: var(--glass-surface-hover);
+    background: rgba(16, 23, 34, 0.86);
     border-color: var(--glass-border-bright);
     box-shadow:
-      0 18px 52px rgba(0, 0, 0, 0.42),
-      0 4px 16px rgba(0, 0, 0, 0.24),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 0 28px var(--glass-glow);
+      0 20px 52px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.055),
+      0 0 26px var(--glass-glow);
     transform: translateY(-1px);
   }
 
@@ -232,6 +214,32 @@
   .glass-card:nth-child(4) { animation-delay: 240ms; }
   .glass-card:nth-child(5) { animation-delay: 320ms; }
   .glass-card:nth-child(6) { animation-delay: 400ms; }
+
+  @media (max-width: 1024px) {
+    .tec-page {
+      padding: 1.5rem;
+    }
+
+    .tec-segmented {
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    .tec-segmented-item {
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .tec-page {
+      padding: 1rem;
+    }
+
+    .tec-page-title {
+      font-size: 1.5rem;
+      line-height: 1.9rem;
+    }
+  }
 }
 
 @keyframes tecidex-drift {

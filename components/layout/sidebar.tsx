@@ -65,7 +65,7 @@ const navItems: NavItem[] = [
 
 
 const navItemBase =
-  "flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm font-medium transition-all duration-180 cursor-pointer";
+  "flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm font-medium transition-all duration-180 cursor-pointer";
 
 function NavSection({
   item,
@@ -86,10 +86,10 @@ function NavSection({
   const router = useRouter();
 
   const activeStyle: React.CSSProperties = {
-    background: "rgba(15, 107, 63, 0.22)",
-    border: "1px solid rgba(57, 217, 138, 0.26)",
-    boxShadow: "0 2px 12px rgba(57, 217, 138, 0.13), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-    color: "#39d98a",
+    background: "rgba(22, 163, 95, 0.18)",
+    border: "1px solid rgba(52, 213, 130, 0.24)",
+    boxShadow: "0 8px 22px rgba(52, 213, 130, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+    color: "#34d582",
   };
 
   if (item.href) {
@@ -102,7 +102,7 @@ function NavSection({
               render={
                 <Link
                   href={item.href}
-                  className={cn(navItemBase, !isActive && "text-muted-foreground hover:text-foreground hover:bg-muted/50")}
+                className={cn(navItemBase, "h-12 justify-center", !isActive && "text-muted-foreground hover:text-foreground hover:bg-white/[0.055]")}
                   style={isActive ? activeStyle : undefined}
                 >
                   <Icon className="w-5 h-5 shrink-0" />
@@ -143,8 +143,8 @@ function NavSection({
                 }}
                 className={cn(
                   navItemBase,
-                  "text-muted-foreground hover:text-foreground hover:bg-muted/50 w-full",
-                  isActive && "text-[#39d98a]"
+                  "h-12 justify-center text-muted-foreground hover:text-foreground hover:bg-white/[0.055] w-full",
+                  isActive && "text-[#34d582]"
                 )}
                 style={isActive ? activeStyle : undefined}
               >
@@ -186,9 +186,9 @@ function NavSection({
                   "block px-3 py-2 rounded-[8px] text-sm cursor-pointer transition-all duration-180",
                   childActive
                     ? "font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/[0.055]"
                 )}
-                style={childActive ? { color: "#39d98a", background: "rgba(15,107,63,0.22)" } : undefined}
+                style={childActive ? { color: "#34d582", background: "rgba(22,163,95,0.16)" } : undefined}
               >
                 {child.label}
               </Link>
@@ -201,7 +201,7 @@ function NavSection({
 }
 
 export function Sidebar({ companyName, userEmail }: { companyName?: string; userEmail?: string }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -216,14 +216,14 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
     <aside
       className={cn(
         "relative flex flex-col h-screen transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        collapsed ? "w-[88px]" : "w-72"
       )}
       style={{
-        background: "rgba(4, 21, 13, 0.9)",
-        backdropFilter: "blur(44px) saturate(155%)",
-        WebkitBackdropFilter: "blur(44px) saturate(155%)",
-        borderRight: "1px solid rgba(255, 255, 255, 0.11)",
-        boxShadow: "4px 0 32px rgba(0, 0, 0, 0.4), inset -1px 0 0 rgba(255, 255, 255, 0.06)",
+        background: "rgba(8, 11, 19, 0.94)",
+        backdropFilter: "blur(28px) saturate(140%)",
+        WebkitBackdropFilter: "blur(28px) saturate(140%)",
+        borderRight: "1px solid rgba(255, 255, 255, 0.075)",
+        boxShadow: "8px 0 34px rgba(0, 0, 0, 0.28), inset -1px 0 0 rgba(255, 255, 255, 0.03)",
       }}
     >
       {/* Header — Tecidex logo */}
@@ -240,13 +240,15 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
             className="object-contain"
           />
         ) : (
-          <Image
-            src="/LogoTecidexPlataforma.png"
-            alt="Tecidex"
-            width={36}
-            height={36}
-            className="object-contain"
-          />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.035]">
+            <Image
+              src="/LogoTecidexPlataforma.png"
+              alt="Tecidex"
+              width={34}
+              height={34}
+              className="object-contain"
+            />
+          </div>
         )}
       </div>
 
@@ -255,8 +257,8 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
         onClick={() => setCollapsed(!collapsed)}
         className="absolute -right-3 top-16 z-10 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all duration-180 hover:scale-110"
         style={{
-          background: "rgba(5, 12, 8, 0.9)",
-          border: "1px solid rgba(57, 217, 138, 0.28)",
+          background: "rgba(10, 14, 22, 0.96)",
+          border: "1px solid rgba(52, 213, 130, 0.24)",
           boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
         }}
         aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
@@ -267,7 +269,7 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
       </button>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
+      <nav className={cn("flex-1 overflow-y-auto py-5 space-y-2", collapsed ? "px-3" : "px-3")}>
         {navItems.map((item) => (
           <NavSection
             key={item.label}
@@ -280,7 +282,7 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
       </nav>
 
       {/* Footer — User section */}
-      <div className="px-3 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid rgba(255, 255, 255, 0.09)" }}>
+      <div className="px-3 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid rgba(255, 255, 255, 0.075)" }}>
         {collapsed ? (
           <TooltipProvider delay={0}>
             <Tooltip>
