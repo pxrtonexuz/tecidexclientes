@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
     label: "CRM",
     icon: Users,
     children: [
-      { label: "Conversas", href: "/crm/conversas" },
+      { label: "CRM Chat", href: "/crm/conversas" },
       { label: "Kanban", href: "/crm/kanban" },
       { label: "Lista de Leads", href: "/crm/leads" },
     ],
@@ -60,7 +60,6 @@ const navItems: NavItem[] = [
     icon: Bot,
     children: [
       { label: "Saúde da IA", href: "/atendente/saude" },
-      { label: "Chat", href: "/atendente/chat" },
     ],
   },
 ];

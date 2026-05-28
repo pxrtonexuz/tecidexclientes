@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 
 const tabs = [
   { label: "Saúde da IA", href: "/atendente/saude" },
-  { label: "Chat", href: "/atendente/chat" },
 ];
 
 export default function AtendenteLayout({ children }: { children: React.ReactNode }) {

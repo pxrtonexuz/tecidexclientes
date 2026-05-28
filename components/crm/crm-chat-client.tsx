@@ -2,17 +2,33 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createClient } from "@supabase/supabase-js";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import {
+  ArrowLeft,
   Bot,
   Calendar,
+  CheckCircle2,
   CircleDollarSign,
   Clock,
+  Info,
   MessageSquare,
   Pause,
   Play,
+  QrCode,
   Search,
   User,
   Wifi,
@@ -23,6 +39,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import {
   updateLeadModelo,
@@ -54,30 +71,23 @@ type LocalConversa = Omit<ConversaData, "status" | "messages"> & {
   pausedAt?: Date;
 };
 
-const statusLabels = {
-  em_atendimento: "Em atendimento",
-  montando_pedido: "Montando pedido",
-  pedido_fechado: "Pedido fechado",
-  venda_concluida: "Venda concluida",
-  sem_resposta: "Sem resposta",
-  perdido: "Perdido",
-} as const;
+const columns = [
+  { id: "em_atendimento", label: "Em atendimento", accent: "#38bdf8", glow: "rgba(56, 189, 248, 0.18)" },
+  { id: "montando_pedido", label: "Montando pedido", accent: "#818cf8", glow: "rgba(129, 140, 248, 0.18)" },
+  { id: "pedido_fechado", label: "Pedido fechado", accent: "#39d98a", glow: "rgba(57, 217, 138, 0.25)" },
+  { id: "venda_concluida", label: "Venda concluida", accent: "#39d98a", glow: "rgba(57, 217, 138, 0.30)" },
+  { id: "sem_resposta", label: "Sem resposta", accent: "#f59e0b", glow: "rgba(245, 158, 11, 0.18)" },
+  { id: "perdido", label: "Perdido", accent: "#ef4444", glow: "rgba(239, 68, 68, 0.18)" },
+] as const;
 
-type LeadStatus = keyof typeof statusLabels;
+type LeadStatus = (typeof columns)[number]["id"];
+
+const statusLabels = Object.fromEntries(columns.map((column) => [column.id, column.label])) as Record<LeadStatus, string>;
 
 const conversaStatusStyles: Record<ConversaStatus, string> = {
   ativa: "bg-[#39d98a]/15 text-[#39d98a] border-[#39d98a]/20",
   pausada: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
   concluida: "bg-muted text-muted-foreground border-border",
-};
-
-const leadStatusStyles: Record<LeadStatus, React.CSSProperties> = {
-  em_atendimento: { background: "rgba(56, 189, 248, 0.12)", color: "#38bdf8" },
-  montando_pedido: { background: "rgba(129, 140, 248, 0.12)", color: "#818cf8" },
-  pedido_fechado: { background: "rgba(57, 217, 138, 0.12)", color: "#39d98a" },
-  venda_concluida: { background: "rgba(57, 217, 138, 0.15)", color: "#39d98a" },
-  sem_resposta: { background: "rgba(245, 158, 11, 0.12)", color: "#f59e0b" },
-  perdido: { background: "rgba(239, 68, 68, 0.12)", color: "#ef4444" },
 };
 
 function onlyDigits(value: string | null | undefined) {
@@ -112,6 +122,14 @@ function leadMatchesConversation(lead: LeadRow, conversa: LocalConversa) {
   return leadPhone.length > 0 && leadPhone === sessionPhone(conversa.session_id);
 }
 
+function isLeadStatus(value: string): value is LeadStatus {
+  return columns.some((column) => column.id === value);
+}
+
+function safeLeadStatus(value?: string | null): LeadStatus {
+  return value && isLeadStatus(value) ? value : "em_atendimento";
+}
+
 function formatLastMessage(conv?: LocalConversa) {
   const last = conv?.lastMessage;
   if (!last) return "--";
@@ -129,6 +147,7 @@ type CrmContact = {
   id: string;
   title: string;
   phone: string;
+  stage: LeadStatus;
   lead?: LeadRow;
   conversa?: LocalConversa;
 };
@@ -140,28 +159,479 @@ type Props = {
   tenantAnonKey: string;
 };
 
+function ConnectionPanel({ connected, realtimeOk }: { connected: boolean; realtimeOk: boolean }) {
+  return (
+    <div className="grid gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[180px_minmax(0,1fr)]">
+      <div className="flex h-44 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
+        {connected ? (
+          <div className="flex flex-col items-center gap-2 text-[#39d98a]">
+            <CheckCircle2 className="h-10 w-10" />
+            <span className="text-xs font-semibold uppercase tracking-widest">Conectado</span>
+          </div>
+        ) : (
+          <div className="grid h-32 w-32 grid-cols-5 gap-1 rounded-lg border border-white/10 bg-white p-2">
+            {Array.from({ length: 25 }, (_, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "rounded-[2px]",
+                  [0, 1, 2, 5, 10, 12, 14, 17, 19, 20, 21, 22, 24].includes(index) ? "bg-black" : "bg-transparent"
+                )}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col justify-center">
+        <div className="mb-3 flex items-center gap-2">
+          <QrCode className="h-5 w-5 text-[#39d98a]" />
+          <p className="text-sm font-semibold text-foreground">WhatsApp da operacao</p>
+        </div>
+        <h2 className="text-xl font-semibold text-foreground">
+          {connected ? "Conversas sincronizadas com a plataforma." : "Conecte o WhatsApp para iniciar o CRM Chat."}
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          {connected
+            ? "O Kanban abaixo organiza os contatos por etapa comercial. Novas mensagens entram em tempo real quando o canal esta inscrito."
+            : "Este bloco ja reserva o lugar do QR Code. Para exibir o QR real, falta plugar o endpoint da instancia WhatsApp/UazAPI ou n8n que retorna status e codigo de conexao."}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Badge className={cn("border", connected ? "border-[#39d98a]/20 bg-[#39d98a]/15 text-[#39d98a]" : "border-yellow-500/20 bg-yellow-500/15 text-yellow-400")}>
+            {connected ? "WhatsApp conectado" : "Aguardando QR real"}
+          </Badge>
+          <Badge className={cn("border", realtimeOk ? "border-[#39d98a]/20 bg-[#39d98a]/15 text-[#39d98a]" : "border-border bg-muted text-muted-foreground")}>
+            {realtimeOk ? "Realtime ativo" : "Realtime conectando"}
+          </Badge>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContactInfoSheet({
+  contact,
+  open,
+  onOpenChange,
+}: {
+  contact?: CrmContact;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const lead = contact?.lead;
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="border-white/10 bg-[#05120c] text-foreground sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>{contact?.title ?? "Detalhes do lead"}</SheetTitle>
+          <SheetDescription>Informacoes gerais do contato selecionado.</SheetDescription>
+        </SheetHeader>
+        <div className="space-y-4 px-4 pb-4">
+          <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Contato</p>
+            <div className="mt-3 space-y-2 text-sm">
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground">Telefone</span>
+                <span className="text-right text-foreground">{contact?.phone || "--"}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground">Chat</span>
+                <span className="text-right text-foreground">{contact?.conversa ? "Vinculado" : "Sem conversa"}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground">Etapa</span>
+                <span className="text-right text-foreground">{contact ? statusLabels[contact.stage] : "--"}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Lead</p>
+            {lead ? (
+              <div className="mt-3 space-y-2 text-sm">
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Modelo</span>
+                  <span className="text-right text-foreground">{lead.modelo || "--"}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Valor</span>
+                  <span className="text-right text-foreground">{moneyLabel(lead.valor)}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Entrada</span>
+                  <span className="text-right text-foreground">
+                    {format(new Date(lead.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Observacoes</span>
+                  <p className="mt-1 rounded-lg border border-white/10 bg-white/[0.035] p-3 text-foreground">
+                    {lead.observacoes || "Sem observacoes."}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Esta conversa ainda nao esta vinculada a um lead. O vinculo automatico acontece pelo telefone.
+              </p>
+            )}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function ContactCard({
+  contact,
+  selected,
+  dragging,
+  onOpen,
+  onInfo,
+}: {
+  contact: CrmContact;
+  selected?: boolean;
+  dragging?: boolean;
+  onOpen: () => void;
+  onInfo: () => void;
+}) {
+  const col = columns.find((column) => column.id === contact.stage) ?? columns[0];
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group w-full select-none rounded-[14px] p-3 text-left transition-all"
+      style={{
+        background: selected ? "rgba(57, 217, 138, 0.12)" : dragging ? "rgba(255, 255, 255, 0.10)" : "rgba(255, 255, 255, 0.055)",
+        border: `1px solid ${selected ? "rgba(57, 217, 138, 0.32)" : "rgba(255, 255, 255, 0.12)"}`,
+        boxShadow: dragging ? `0 20px 60px rgba(0,0,0,0.5), 0 0 30px ${col.glow}` : "0 4px 16px rgba(0,0,0,0.28)",
+      }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onInfo();
+          }}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] text-muted-foreground transition-colors hover:text-foreground"
+          aria-label="Ver detalhes do lead"
+        >
+          <Info className="h-3.5 w-3.5" />
+        </button>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground">{contact.title}</p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">{contact.phone || "Sem telefone"}</p>
+        </div>
+        {contact.conversa && (
+          <Badge className={cn("shrink-0 border text-[10px]", conversaStatusStyles[contact.conversa.status])}>
+            {contact.conversa.status}
+          </Badge>
+        )}
+      </div>
+      <div className="mt-3 space-y-1.5">
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span className="truncate text-muted-foreground">{contact.lead?.modelo || contact.conversa?.messages.at(-1)?.text || "Sem historico"}</span>
+          <span className="shrink-0 font-medium" style={{ color: col.accent }}>
+            {moneyLabel(contact.lead?.valor)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span>{contact.conversa ? `${contact.conversa.messages.length} msgs` : "Sem chat"}</span>
+          <span>{formatLastMessage(contact.conversa)}</span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function SortableContactCard({
+  contact,
+  selected,
+  onOpen,
+  onInfo,
+}: {
+  contact: CrmContact;
+  selected?: boolean;
+  onOpen: () => void;
+  onInfo: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: contact.id });
+  return (
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} {...attributes} {...listeners}>
+      <ContactCard contact={contact} selected={selected} dragging={isDragging} onOpen={onOpen} onInfo={onInfo} />
+    </div>
+  );
+}
+
+function DroppableColumn({
+  column,
+  contacts,
+  activeId,
+  onOpen,
+  onInfo,
+  compact,
+}: {
+  column: (typeof columns)[number];
+  contacts: CrmContact[];
+  activeId?: string;
+  onOpen: (id: string) => void;
+  onInfo: (contact: CrmContact) => void;
+  compact?: boolean;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: column.id });
+  return (
+    <div className={cn("flex shrink-0 flex-col", compact ? "w-full" : "w-72")}>
+      <div
+        className="flex items-center justify-between rounded-t-[16px] border border-white/10 px-3 py-2.5"
+        style={{ borderTopColor: column.glow, background: "rgba(255, 255, 255, 0.04)" }}
+      >
+        <span className="text-xs font-semibold" style={{ color: column.accent }}>
+          {column.label}
+        </span>
+        <span className="rounded-full border border-white/10 bg-white/[0.06] px-1.5 py-0.5 text-xs font-bold" style={{ color: column.accent }}>
+          {contacts.length}
+        </span>
+      </div>
+      <SortableContext id={column.id} items={contacts.map((contact) => contact.id)} strategy={verticalListSortingStrategy}>
+        <div
+          ref={setNodeRef}
+          className={cn("flex-1 space-y-2 rounded-b-[16px] border border-t-0 border-white/10 p-2", compact ? "max-h-[calc(100vh-19rem)] overflow-y-auto" : "min-h-72")}
+          style={{ background: isOver ? "rgba(255, 255, 255, 0.06)" : "rgba(255, 255, 255, 0.025)" }}
+        >
+          {contacts.map((contact) => (
+            <SortableContactCard
+              key={contact.id}
+              contact={contact}
+              selected={activeId === contact.id}
+              onOpen={() => onOpen(contact.id)}
+              onInfo={() => onInfo(contact)}
+            />
+          ))}
+          {contacts.length === 0 && (
+            <div className="flex h-24 items-center justify-center rounded-xl border-2 border-dashed border-white/10 text-xs text-muted-foreground">
+              Solte aqui
+            </div>
+          )}
+        </div>
+      </SortableContext>
+    </div>
+  );
+}
+
+function ChatPanel({
+  contact,
+  realtimeOk,
+}: {
+  contact?: CrmContact;
+  realtimeOk: boolean;
+}) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [contact?.id, contact?.conversa?.messages.length]);
+
+  return (
+    <section className="flex min-h-[34rem] flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035]">
+      <header className="flex items-center justify-between gap-3 border-b border-white/10 bg-white/[0.025] px-5 py-3">
+        <div className="min-w-0">
+          <p className="truncate font-semibold text-foreground">{contact?.title ?? "Selecione um contato"}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <User className="h-3 w-3" />
+              {contact?.lead ? "Lead vinculado" : "Sem lead vinculado"}
+            </span>
+            <span className="flex items-center gap-1">
+              <MessageSquare className="h-3 w-3" />
+              {contact?.conversa ? `${contact.conversa.messages.length} mensagens` : "Sem conversa"}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs">
+          <Wifi className={cn("h-3.5 w-3.5", realtimeOk ? "text-[#39d98a]" : "text-muted-foreground")} />
+          <span className={realtimeOk ? "text-[#39d98a]" : "text-muted-foreground"}>{realtimeOk ? "Ao vivo" : "Conectando"}</span>
+        </div>
+      </header>
+
+      <ScrollArea className="flex-1 px-5 py-4">
+        {contact?.conversa ? (
+          <div className="mx-auto max-w-3xl space-y-4">
+            {contact.conversa.messages.map((message) => (
+              <div key={message.id} className={cn("flex gap-3", message.from === "cliente" ? "flex-row" : "flex-row-reverse")}>
+                <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", message.from === "cliente" ? "bg-muted" : "bg-primary/15")}>
+                  {message.from === "cliente" ? <User className="h-4 w-4 text-muted-foreground" /> : <Bot className="h-4 w-4 text-primary" />}
+                </div>
+                <div className={cn("max-w-[78%]", message.from === "agente" && "flex flex-col items-end")}>
+                  <div
+                    className="whitespace-pre-wrap px-4 py-2.5 text-sm leading-relaxed"
+                    style={
+                      message.from === "cliente"
+                        ? {
+                            background: "rgba(255, 255, 255, 0.075)",
+                            border: "1px solid rgba(255, 255, 255, 0.11)",
+                            borderRadius: "18px 18px 18px 4px",
+                          }
+                        : { background: "#0f6b3f", color: "#fff", borderRadius: "18px 18px 4px 18px" }
+                    }
+                  >
+                    {message.text}
+                  </div>
+                  {message.at && (
+                    <p className="mt-1 px-1 text-xs text-muted-foreground">
+                      {new Date(message.at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        ) : (
+          <div className="flex h-full min-h-[24rem] items-center justify-center text-center text-sm text-muted-foreground">
+            Este contato ainda nao possui conversa vinculada pelo telefone.
+          </div>
+        )}
+      </ScrollArea>
+    </section>
+  );
+}
+
+function ContextPanel({
+  contact,
+  pausing,
+  onPauseToggle,
+  onStatusChange,
+  onModeloBlur,
+  onValorBlur,
+  onNotesBlur,
+}: {
+  contact?: CrmContact;
+  pausing: string | null;
+  onPauseToggle: () => void;
+  onStatusChange: (value: string | null) => void;
+  onModeloBlur: (value: string) => void;
+  onValorBlur: (value: string) => void;
+  onNotesBlur: (value: string) => void;
+}) {
+  const lead = contact?.lead;
+  const conversa = contact?.conversa;
+  const col = columns.find((column) => column.id === contact?.stage) ?? columns[0];
+
+  return (
+    <aside className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+      <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Contexto</p>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div>
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" /> Entrada
+            </p>
+            <p className="mt-1 text-sm font-medium text-foreground">
+              {lead ? format(new Date(lead.created_at), "dd/MM/yyyy", { locale: ptBR }) : "--"}
+            </p>
+          </div>
+          <div>
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              <CircleDollarSign className="h-3 w-3" /> Valor
+            </p>
+            <p className="mt-1 text-sm font-medium text-foreground">{moneyLabel(lead?.valor)}</p>
+          </div>
+          <div className="col-span-2">
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" /> Ultima mensagem
+            </p>
+            <p className="mt-1 text-sm font-medium text-foreground">{formatLastMessage(conversa)}</p>
+          </div>
+        </div>
+      </div>
+
+      {lead ? (
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Etapa comercial</label>
+            <Select value={contact?.stage} onValueChange={onStatusChange}>
+              <SelectTrigger className="h-9 border-white/10" style={{ background: col.glow, color: col.accent }}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="border-border bg-popover">
+                {columns.map((column) => (
+                  <SelectItem key={column.id} value={column.id}>
+                    {column.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Modelo/interesse</label>
+            <Input key={`${lead.id}:modelo`} defaultValue={lead.modelo ?? ""} onBlur={(event) => onModeloBlur(event.target.value)} className="h-9 border-white/10 bg-white/[0.045]" placeholder="Modelo..." />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Valor do pedido</label>
+            <Input key={`${lead.id}:valor`} defaultValue={lead.valor != null ? String(lead.valor) : ""} onBlur={(event) => onValorBlur(event.target.value)} className="h-9 border-white/10 bg-white/[0.045]" placeholder="R$ 0,00" />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Observacoes internas</label>
+            <Textarea key={`${lead.id}:obs`} defaultValue={lead.observacoes ?? ""} onBlur={(event) => onNotesBlur(event.target.value)} className="min-h-24 resize-none border-white/10 bg-white/[0.045]" placeholder="Notas da equipe..." />
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-100">
+          Conversa sem lead vinculado. Cadastre ou ajuste o telefone do lead para unir os dados automaticamente.
+        </div>
+      )}
+
+      {conversa && (
+        <Button
+          onClick={onPauseToggle}
+          disabled={pausing === conversa.session_id || conversa.status === "concluida"}
+          variant={conversa.status === "pausada" ? "default" : "outline"}
+          className="w-full gap-2"
+        >
+          {pausing === conversa.session_id ? (
+            "Aguarde..."
+          ) : conversa.status === "pausada" ? (
+            <>
+              <Play className="h-4 w-4" /> Retomar agente
+            </>
+          ) : (
+            <>
+              <Pause className="h-4 w-4" /> Pausar agente
+            </>
+          )}
+        </Button>
+      )}
+    </aside>
+  );
+}
+
 export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenantAnonKey }: Props) {
   const [leads, setLeads] = useState(initialLeads);
   const [conversas, setConversas] = useState<LocalConversa[]>(
-    initialConversas.map((c) => ({ ...c, status: c.status as ConversaStatus }))
+    initialConversas.map((conversa) => ({ ...conversa, status: conversa.status as ConversaStatus }))
   );
-  const [activeId, setActiveId] = useState<string>("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [infoContact, setInfoContact] = useState<CrmContact | undefined>();
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "with-chat" | "without-lead">("all");
-  const [realtimeOk, setRealtimeOk] = useState(false);
   const [pausing, setPausing] = useState<string | null>(null);
+  const [realtimeOk, setRealtimeOk] = useState(false);
   const [, startTransition] = useTransition();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   const contacts = useMemo<CrmContact[]>(() => {
     const usedConversations = new Set<string>();
     const leadContacts = leads.map((lead) => {
-      const conversa = conversas.find((c) => leadMatchesConversation(lead, c));
+      const conversa = conversas.find((item) => leadMatchesConversation(lead, item));
       if (conversa) usedConversations.add(conversa.session_id);
       return {
         id: lead.id,
         title: lead.nome,
         phone: lead.telefone ?? "",
+        stage: safeLeadStatus(lead.status),
         lead,
         conversa,
       };
@@ -173,38 +643,30 @@ export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenan
         id: `chat:${conversa.session_id}`,
         title: conversa.clientName || formatPhone(conversa.session_id),
         phone: formatPhone(conversa.session_id),
+        stage: "em_atendimento" as LeadStatus,
         conversa,
       }));
 
-    return [...leadContacts, ...conversationOnly].sort((a, b) => {
-      const aHasChat = a.conversa ? 1 : 0;
-      const bHasChat = b.conversa ? 1 : 0;
-      return bHasChat - aHasChat;
-    });
+    return [...leadContacts, ...conversationOnly];
   }, [leads, conversas]);
 
   const filteredContacts = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    return contacts.filter((contact) => {
-      const matchesSearch =
-        !needle ||
+    const digits = onlyDigits(needle);
+    if (!needle) return contacts;
+    return contacts.filter(
+      (contact) =>
         contact.title.toLowerCase().includes(needle) ||
-        onlyDigits(contact.phone).includes(onlyDigits(needle));
-      const matchesFilter =
-        filter === "all" ||
-        (filter === "with-chat" && contact.conversa) ||
-        (filter === "without-lead" && !contact.lead);
-      return matchesSearch && matchesFilter;
-    });
-  }, [contacts, filter, search]);
+        onlyDigits(contact.phone).includes(digits) ||
+        contact.lead?.modelo?.toLowerCase().includes(needle)
+    );
+  }, [contacts, search]);
 
-  const active = contacts.find((contact) => contact.id === activeId) ?? filteredContacts[0];
-  const activeLead = active?.lead;
-  const activeConversa = active?.conversa;
-
-  useEffect(() => {
-    if (!activeId && filteredContacts[0]) setActiveId(filteredContacts[0].id);
-  }, [activeId, filteredContacts]);
+  const selected = contacts.find((contact) => contact.id === selectedId);
+  const activeDrag = contacts.find((contact) => contact.id === activeDragId);
+  const selectedColumn = columns.find((column) => column.id === selected?.stage) ?? columns[0];
+  const selectedColumnContacts = filteredContacts.filter((contact) => contact.stage === selectedColumn.id);
+  const connected = conversas.length > 0;
 
   useEffect(() => {
     const db = createClient(tenantUrl, tenantAnonKey);
@@ -223,17 +685,17 @@ export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenan
           };
 
           setConversas((prev) => {
-            const existing = prev.find((c) => c.session_id === row.session_id);
+            const existing = prev.find((conversa) => conversa.session_id === row.session_id);
             if (existing) {
-              return prev.map((c) =>
-                c.session_id === row.session_id
+              return prev.map((conversa) =>
+                conversa.session_id === row.session_id
                   ? {
-                      ...c,
-                      status: c.status === "concluida" ? "concluida" : "ativa",
+                      ...conversa,
+                      status: conversa.status === "concluida" ? "concluida" : "ativa",
                       lastMessage: new Date().toISOString(),
-                      messages: [...c.messages, msg],
+                      messages: [...conversa.messages, msg],
                     }
-                  : c
+                  : conversa
               );
             }
             return [
@@ -256,89 +718,120 @@ export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenan
     };
   }, [tenantAnonKey, tenantUrl]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [active?.id, activeConversa?.messages.length]);
-
   function patchLead(id: string, patch: Partial<LeadRow>) {
     setLeads((prev) => prev.map((lead) => (lead.id === id ? { ...lead, ...patch } : lead)));
   }
 
   function handleStatusChange(value: string | null) {
-    if (!activeLead || !value) return;
-    const previous = activeLead.status;
-    patchLead(activeLead.id, { status: value });
+    if (!selected?.lead || !value || !isLeadStatus(value)) return;
+    const previous = selected.lead.status;
+    patchLead(selected.lead.id, { status: value });
     startTransition(async () => {
-      const res = await updateLeadStatus(activeLead.id, value);
+      const res = await updateLeadStatus(selected.lead!.id, value);
       if (res.error) {
-        patchLead(activeLead.id, { status: previous });
+        patchLead(selected.lead!.id, { status: previous });
         toast.error(res.error);
       }
     });
   }
 
-  function handleModeloBlur(value: string) {
-    if (!activeLead || value === (activeLead.modelo ?? "")) return;
-    const previous = activeLead.modelo;
-    patchLead(activeLead.id, { modelo: value });
+  function updateContactStage(contact: CrmContact, stage: LeadStatus) {
+    if (!contact.lead) {
+      toast.message("Conversa sem lead vinculado", {
+        description: "A etapa so e persistida quando existe um lead com telefone correspondente.",
+      });
+      return;
+    }
+    const previous = contact.lead.status;
+    patchLead(contact.lead.id, { status: stage });
     startTransition(async () => {
-      const res = await updateLeadModelo(activeLead.id, value);
+      const res = await updateLeadStatus(contact.lead!.id, stage);
       if (res.error) {
-        patchLead(activeLead.id, { modelo: previous });
+        patchLead(contact.lead!.id, { status: previous });
+        toast.error(res.error);
+      }
+    });
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    setActiveDragId(String(event.active.id));
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveDragId(null);
+    if (!event.over) return;
+    const contact = contacts.find((item) => item.id === String(event.active.id));
+    if (!contact) return;
+    const overId = String(event.over.id);
+    const targetStage = isLeadStatus(overId)
+      ? overId
+      : contacts.find((item) => item.id === overId)?.stage;
+    if (!targetStage || targetStage === contact.stage) return;
+    updateContactStage(contact, targetStage);
+  }
+
+  function handleModeloBlur(value: string) {
+    if (!selected?.lead || value === (selected.lead.modelo ?? "")) return;
+    const previous = selected.lead.modelo;
+    patchLead(selected.lead.id, { modelo: value });
+    startTransition(async () => {
+      const res = await updateLeadModelo(selected.lead!.id, value);
+      if (res.error) {
+        patchLead(selected.lead!.id, { modelo: previous });
         toast.error(res.error);
       }
     });
   }
 
   function handleValorBlur(value: string) {
-    if (!activeLead) return;
+    if (!selected?.lead) return;
     const num = parseFloat(value.replace(/[^\d.,]/g, "").replace(",", "."));
     const next = Number.isNaN(num) ? null : num;
-    if (next === activeLead.valor) return;
-    const previous = activeLead.valor;
-    patchLead(activeLead.id, { valor: next });
+    if (next === selected.lead.valor) return;
+    const previous = selected.lead.valor;
+    patchLead(selected.lead.id, { valor: next });
     startTransition(async () => {
-      const res = await updateLeadValor(activeLead.id, next);
+      const res = await updateLeadValor(selected.lead!.id, next);
       if (res.error) {
-        patchLead(activeLead.id, { valor: previous });
+        patchLead(selected.lead!.id, { valor: previous });
         toast.error(res.error);
       }
     });
   }
 
   function handleNotesBlur(value: string) {
-    if (!activeLead || value === (activeLead.observacoes ?? "")) return;
-    const previous = activeLead.observacoes;
-    patchLead(activeLead.id, { observacoes: value });
+    if (!selected?.lead || value === (selected.lead.observacoes ?? "")) return;
+    const previous = selected.lead.observacoes;
+    patchLead(selected.lead.id, { observacoes: value });
     startTransition(async () => {
-      const res = await updateLeadObservacoes(activeLead.id, value);
+      const res = await updateLeadObservacoes(selected.lead!.id, value);
       if (res.error) {
-        patchLead(activeLead.id, { observacoes: previous });
+        patchLead(selected.lead!.id, { observacoes: previous });
         toast.error(res.error);
       }
     });
   }
 
   async function togglePause() {
-    if (!activeConversa) return;
-    const pausando = activeConversa.status !== "pausada";
-    const previousStatus = activeConversa.status;
-    setPausing(activeConversa.session_id);
+    if (!selected?.conversa) return;
+    const pausando = selected.conversa.status !== "pausada";
+    const previousStatus = selected.conversa.status;
+    setPausing(selected.conversa.session_id);
     setConversas((prev) =>
-      prev.map((conv) =>
-        conv.session_id === activeConversa.session_id
-          ? { ...conv, status: pausando ? "pausada" : "ativa", pausedAt: pausando ? new Date() : undefined }
-          : conv
+      prev.map((conversa) =>
+        conversa.session_id === selected.conversa!.session_id
+          ? { ...conversa, status: pausando ? "pausada" : "ativa", pausedAt: pausando ? new Date() : undefined }
+          : conversa
       )
     );
 
     try {
-      if (pausando) await pausarConversaIA(activeConversa.session_id);
-      else await reativarConversaIA(activeConversa.session_id);
+      if (pausando) await pausarConversaIA(selected.conversa.session_id);
+      else await reativarConversaIA(selected.conversa.session_id);
     } catch {
       setConversas((prev) =>
-        prev.map((conv) =>
-          conv.session_id === activeConversa.session_id ? { ...conv, status: previousStatus } : conv
+        prev.map((conversa) =>
+          conversa.session_id === selected.conversa!.session_id ? { ...conversa, status: previousStatus } : conversa
         )
       );
       toast.error("Falha ao atualizar o atendimento da IA.");
@@ -348,266 +841,71 @@ export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenan
   }
 
   return (
-    <div className="grid min-h-[calc(100vh-13rem)] grid-cols-1 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] lg:grid-cols-[320px_minmax(0,1fr)_340px]">
-      <aside className="flex min-h-[22rem] flex-col border-b border-white/10 bg-white/[0.025] lg:border-b-0 lg:border-r">
-        <div className="space-y-3 border-b border-white/10 p-3">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar cliente ou telefone..."
-              className="h-9 border-white/10 bg-white/[0.045] pl-9"
+    <div className="space-y-5">
+      <ConnectionPanel connected={connected} realtimeOk={realtimeOk} />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative w-full sm:max-w-sm">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar contato, telefone ou modelo..."
+            className="h-9 border-white/10 bg-white/[0.045] pl-9"
+          />
+        </div>
+        {selected && (
+          <Button variant="outline" className="gap-2 border-white/10" onClick={() => setSelectedId(null)}>
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao Kanban
+          </Button>
+        )}
+      </div>
+
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        {selected ? (
+          <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)_340px]">
+            <DroppableColumn
+              column={selectedColumn}
+              contacts={selectedColumnContacts}
+              activeId={selected.id}
+              onOpen={setSelectedId}
+              onInfo={setInfoContact}
+              compact
+            />
+            <ChatPanel contact={selected} realtimeOk={realtimeOk} />
+            <ContextPanel
+              contact={selected}
+              pausing={pausing}
+              onPauseToggle={togglePause}
+              onStatusChange={handleStatusChange}
+              onModeloBlur={handleModeloBlur}
+              onValorBlur={handleValorBlur}
+              onNotesBlur={handleNotesBlur}
             />
           </div>
-          <div className="grid grid-cols-3 gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1">
-            {[
-              ["all", "Todos"],
-              ["with-chat", "Com chat"],
-              ["without-lead", "Sem lead"],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => setFilter(value as typeof filter)}
-                className={cn(
-                  "h-7 rounded-lg text-xs font-medium transition-colors",
-                  filter === value ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {label}
-              </button>
+        ) : (
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {columns.map((column) => (
+              <DroppableColumn
+                key={column.id}
+                column={column}
+                contacts={filteredContacts.filter((contact) => contact.stage === column.id)}
+                onOpen={setSelectedId}
+                onInfo={setInfoContact}
+              />
             ))}
           </div>
-        </div>
-
-        <ScrollArea className="flex-1">
-          {filteredContacts.map((contact) => (
-            <button
-              key={contact.id}
-              onClick={() => setActiveId(contact.id)}
-              className="w-full border-b border-white/[0.075] px-4 py-3 text-left transition-colors hover:bg-white/[0.045]"
-              style={active?.id === contact.id ? { background: "rgba(255, 255, 255, 0.075)" } : undefined}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-foreground">{contact.title}</p>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{contact.phone || "Sem telefone"}</p>
-                </div>
-                {contact.conversa ? (
-                  <Badge className={cn("shrink-0 border text-[10px]", conversaStatusStyles[contact.conversa.status])}>
-                    {contact.conversa.status}
-                  </Badge>
-                ) : (
-                  <Badge className="shrink-0 border border-border bg-muted text-[10px] text-muted-foreground">
-                    sem chat
-                  </Badge>
-                )}
-              </div>
-              <div className="mt-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                <span className="truncate">
-                  {contact.lead?.modelo || contact.conversa?.messages.at(-1)?.text || "Sem historico"}
-                </span>
-                <span className="shrink-0">{formatLastMessage(contact.conversa)}</span>
-              </div>
-            </button>
-          ))}
-          {filteredContacts.length === 0 && (
-            <div className="p-6 text-center text-sm text-muted-foreground">Nenhum contato encontrado.</div>
-          )}
-        </ScrollArea>
-      </aside>
-
-      <section className="flex min-h-[32rem] flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-white/10 bg-white/[0.025] px-5 py-3">
-          <div className="min-w-0">
-            <p className="truncate font-semibold text-foreground">{active?.title ?? "Selecione um contato"}</p>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <User className="h-3 w-3" />
-                {activeLead ? "Lead vinculado" : "Sem lead vinculado"}
-              </span>
-              <span className="flex items-center gap-1">
-                <MessageSquare className="h-3 w-3" />
-                {activeConversa ? `${activeConversa.messages.length} mensagens` : "Sem conversa"}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs">
-            <Wifi className={cn("h-3.5 w-3.5", realtimeOk ? "text-[#39d98a]" : "text-muted-foreground")} />
-            <span className={realtimeOk ? "text-[#39d98a]" : "text-muted-foreground"}>
-              {realtimeOk ? "Ao vivo" : "Conectando"}
-            </span>
-          </div>
-        </header>
-
-        <ScrollArea className="flex-1 px-5 py-4">
-          {activeConversa ? (
-            <div className="mx-auto max-w-3xl space-y-4">
-              {activeConversa.messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn("flex gap-3", message.from === "cliente" ? "flex-row" : "flex-row-reverse")}
-                >
-                  <div
-                    className={cn(
-                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
-                      message.from === "cliente" ? "bg-muted" : "bg-primary/15"
-                    )}
-                  >
-                    {message.from === "cliente" ? (
-                      <User className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Bot className="h-4 w-4 text-primary" />
-                    )}
-                  </div>
-                  <div className={cn("max-w-[78%]", message.from === "agente" && "flex flex-col items-end")}>
-                    <div
-                      className="whitespace-pre-wrap px-4 py-2.5 text-sm leading-relaxed"
-                      style={
-                        message.from === "cliente"
-                          ? {
-                              background: "rgba(255, 255, 255, 0.075)",
-                              border: "1px solid rgba(255, 255, 255, 0.11)",
-                              borderRadius: "18px 18px 18px 4px",
-                            }
-                          : { background: "#0f6b3f", color: "#fff", borderRadius: "18px 18px 4px 18px" }
-                      }
-                    >
-                      {message.text}
-                    </div>
-                    {message.at && (
-                      <p className="mt-1 px-1 text-xs text-muted-foreground">
-                        {new Date(message.at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          ) : (
-            <div className="flex h-full min-h-[24rem] items-center justify-center text-center text-sm text-muted-foreground">
-              Este lead ainda nao possui conversa vinculada pelo telefone.
-            </div>
-          )}
-        </ScrollArea>
-      </section>
-
-      <aside className="border-t border-white/10 bg-white/[0.025] p-4 lg:border-l lg:border-t-0">
-        {active ? (
-          <div className="space-y-5">
-            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Resumo comercial</p>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div>
-                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" /> Entrada
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-foreground">
-                    {activeLead ? format(new Date(activeLead.created_at), "dd/MM/yyyy", { locale: ptBR }) : "--"}
-                  </p>
-                </div>
-                <div>
-                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <CircleDollarSign className="h-3 w-3" /> Valor
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-foreground">{moneyLabel(activeLead?.valor)}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" /> Ultima mensagem
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-foreground">{formatLastMessage(activeConversa)}</p>
-                </div>
-              </div>
-            </div>
-
-            {activeLead ? (
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Status do lead</label>
-                  <Select value={activeLead.status} onValueChange={handleStatusChange}>
-                    <SelectTrigger
-                      className="h-9 border-white/10"
-                      style={leadStatusStyles[activeLead.status as LeadStatus]}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="border-border bg-popover">
-                      {(Object.keys(statusLabels) as LeadStatus[]).map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {statusLabels[status]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Modelo/interesse</label>
-                  <Input
-                    key={`${activeLead.id}:modelo`}
-                    defaultValue={activeLead.modelo ?? ""}
-                    onBlur={(event) => handleModeloBlur(event.target.value)}
-                    className="h-9 border-white/10 bg-white/[0.045]"
-                    placeholder="Modelo..."
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Valor do pedido</label>
-                  <Input
-                    key={`${activeLead.id}:valor`}
-                    defaultValue={activeLead.valor != null ? String(activeLead.valor) : ""}
-                    onBlur={(event) => handleValorBlur(event.target.value)}
-                    className="h-9 border-white/10 bg-white/[0.045]"
-                    placeholder="R$ 0,00"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Observacoes internas</label>
-                  <Textarea
-                    key={`${activeLead.id}:obs`}
-                    defaultValue={activeLead.observacoes ?? ""}
-                    onBlur={(event) => handleNotesBlur(event.target.value)}
-                    className="min-h-24 resize-none border-white/10 bg-white/[0.045]"
-                    placeholder="Notas da equipe..."
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-100">
-                Esta conversa ainda nao esta vinculada a um lead. O vinculo automatico acontece quando o telefone do lead
-                bate com o telefone da conversa.
-              </div>
-            )}
-
-            {activeConversa && (
-              <Button
-                onClick={togglePause}
-                disabled={pausing === activeConversa.session_id || activeConversa.status === "concluida"}
-                variant={activeConversa.status === "pausada" ? "default" : "outline"}
-                className="w-full gap-2"
-              >
-                {pausing === activeConversa.session_id ? (
-                  "Aguarde..."
-                ) : activeConversa.status === "pausada" ? (
-                  <>
-                    <Play className="h-4 w-4" /> Retomar agente
-                  </>
-                ) : (
-                  <>
-                    <Pause className="h-4 w-4" /> Pausar agente
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Selecione um contato.</div>
         )}
-      </aside>
+
+        <DragOverlay>
+          {activeDrag && (
+            <ContactCard contact={activeDrag} dragging onOpen={() => undefined} onInfo={() => undefined} />
+          )}
+        </DragOverlay>
+      </DndContext>
+
+      <ContactInfoSheet contact={infoContact} open={!!infoContact} onOpenChange={(open) => !open && setInfoContact(undefined)} />
     </div>
   );
 }
