@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 
 const tabs = [
   { label: "CRM Chat", href: "/crm/conversas" },
-  { label: "Kanban", href: "/crm/kanban" },
   { label: "Lista de Leads", href: "/crm/leads" },
 ];
 

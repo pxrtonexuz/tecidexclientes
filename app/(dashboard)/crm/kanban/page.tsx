@@ -1,7 +1,5 @@
-import { getLeads } from "@/app/actions/leads";
-import { KanbanBoard } from "@/components/crm/kanban-board";
+import { redirect } from "next/navigation";
 
-export default async function KanbanPage() {
-  const leads = await getLeads();
-  return <KanbanBoard initialLeads={leads} />;
+export default function KanbanPage() {
+  redirect("/crm/conversas");
 }
