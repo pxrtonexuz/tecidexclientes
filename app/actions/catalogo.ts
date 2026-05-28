@@ -52,6 +52,7 @@ export type TecidoRow = {
   nome: string;
   descricao_sensorial: string | null;
   imagem_url: string | null;
+  cores_disponiveis: string[] | null;
   ativo: boolean;
 };
 

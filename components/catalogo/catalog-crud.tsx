@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, AlertTriangle, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   upsertModelo, deleteModelo, type ModeloRow,
@@ -18,7 +18,7 @@ import {
 } from "@/app/actions/catalogo";
 
 export type ModelItem = { id: string; nome: string; descricao: string; ativo: boolean; atributos: string[] };
-export type TecidoItem = { id: string; nome: string; descricaoSensorial: string; imagemUrl: string; ativo: boolean };
+export type TecidoItem = { id: string; nome: string; descricaoSensorial: string; imagemUrl: string; coresDisponiveis: string[]; ativo: boolean };
 export type AtributoCategory = "Gola" | "Manga" | "Punho" | "Escudo" | "Acabamento" | "Outro";
 export type AtributoItem = { id: string; categoria: AtributoCategory; nome: string; descricao: string; imagemUrl: string; ativo: boolean };
 
@@ -37,6 +37,78 @@ const thStyle: React.CSSProperties = {
   letterSpacing: "0.07em",
   textTransform: "uppercase",
 };
+
+const colorSwatches: Record<string, string> = {
+  amarelo: "#facc15",
+  azul: "#2563eb",
+  bege: "#d6b98c",
+  branco: "#f8fafc",
+  cinza: "#94a3b8",
+  laranja: "#f97316",
+  marrom: "#7c2d12",
+  preto: "#020617",
+  rosa: "#fb7185",
+  roxo: "#9333ea",
+  verde: "#16a34a",
+  vermelho: "#dc2626",
+  vinho: "#7f1d1d",
+};
+
+function parseList(value: string) {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function listToInput(value: string[]) {
+  return value.join(", ");
+}
+
+function swatchColor(label: string) {
+  return colorSwatches[label.trim().toLowerCase()] ?? "#64748b";
+}
+
+function ImagePreview({ url, label }: { url: string; label: string }) {
+  return (
+    <div className="h-12 w-16 overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
+      {url ? (
+        <div
+          className="h-full w-full bg-cover bg-center"
+          style={{ backgroundImage: `url(${url})` }}
+          aria-label={label}
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center">
+          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ColorChips({ colors }: { colors: string[] }) {
+  if (colors.length === 0) {
+    return <span className="text-xs text-muted-foreground">Sem cores cadastradas</span>;
+  }
+
+  return (
+    <div className="flex max-w-xs flex-wrap gap-1.5">
+      {colors.map((color) => (
+        <span
+          key={color}
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.045] px-2 py-1 text-xs text-muted-foreground"
+        >
+          <span
+            className="h-3 w-3 rounded-full border border-white/20"
+            style={{ background: swatchColor(color) }}
+          />
+          {color}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 // ─── Confirm Delete Dialog ────────────────────────────────────────────────────
 
@@ -226,28 +298,36 @@ export function ModelosCrud({ initialModelos }: { initialModelos: ModeloRow[] })
 // ─── Tecidos ─────────────────────────────────────────────────────────────────
 
 function rowToTecido(r: TecidoRow): TecidoItem {
-  return { id: r.id, nome: r.nome, descricaoSensorial: r.descricao_sensorial ?? "", imagemUrl: r.imagem_url ?? "", ativo: r.ativo };
+  return {
+    id: r.id,
+    nome: r.nome,
+    descricaoSensorial: r.descricao_sensorial ?? "",
+    imagemUrl: r.imagem_url ?? "",
+    coresDisponiveis: r.cores_disponiveis ?? [],
+    ativo: r.ativo,
+  };
 }
 
 export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] }) {
   const [items, setItems] = useState<TecidoItem[]>(initialTecidos.map(rowToTecido));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TecidoItem | undefined>();
-  const [form, setForm] = useState({ nome: "", descricaoSensorial: "", imagemUrl: "", ativo: true });
+  const [form, setForm] = useState({ nome: "", descricaoSensorial: "", imagemUrl: "", coresDisponiveis: "", ativo: true });
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; nome: string } | null>(null);
   const [, startTransition] = useTransition();
 
-  function openNew() { setEditing(undefined); setForm({ nome: "", descricaoSensorial: "", imagemUrl: "", ativo: true }); setDialogOpen(true); }
-  function openEdit(t: TecidoItem) { setEditing(t); setForm({ nome: t.nome, descricaoSensorial: t.descricaoSensorial, imagemUrl: t.imagemUrl, ativo: t.ativo }); setDialogOpen(true); }
+  function openNew() { setEditing(undefined); setForm({ nome: "", descricaoSensorial: "", imagemUrl: "", coresDisponiveis: "", ativo: true }); setDialogOpen(true); }
+  function openEdit(t: TecidoItem) { setEditing(t); setForm({ nome: t.nome, descricaoSensorial: t.descricaoSensorial, imagemUrl: t.imagemUrl, coresDisponiveis: listToInput(t.coresDisponiveis), ativo: t.ativo }); setDialogOpen(true); }
 
   async function handleSave() {
     setSaving(true);
-    const row = { id: editing?.id, nome: form.nome, descricao_sensorial: form.descricaoSensorial, imagem_url: form.imagemUrl || null, ativo: form.ativo };
+    const colors = parseList(form.coresDisponiveis);
+    const row = { id: editing?.id, nome: form.nome, descricao_sensorial: form.descricaoSensorial, imagem_url: form.imagemUrl || null, cores_disponiveis: colors, ativo: form.ativo };
     if (editing) {
-      setItems((prev) => prev.map((i) => (i.id === editing.id ? { ...i, ...form } : i)));
+      setItems((prev) => prev.map((i) => (i.id === editing.id ? { ...i, ...form, coresDisponiveis: colors } : i)));
     } else {
-      setItems((prev) => [...prev, { ...form, id: crypto.randomUUID() }]);
+      setItems((prev) => [...prev, { ...form, coresDisponiveis: colors, id: crypto.randomUUID() }]);
     }
     startTransition(async () => {
       const res = await upsertTecido(row);
@@ -277,8 +357,8 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
         <table className="w-full text-sm">
           <thead>
             <tr style={{ background: "rgba(255, 255, 255, 0.06)", borderBottom: "1px solid rgba(255, 255, 255, 0.10)" }}>
-              {["Imagem", "Nome", "Descrição sensorial", "Status", "Ações"].map((h, i) => (
-                <th key={h} className={cn("px-4 py-3", i === 4 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
+              {["Foto", "Nome", "Descricao sensorial", "Cores", "Status", "Acoes"].map((h, i) => (
+                <th key={h} className={cn("px-4 py-3", i === 5 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -289,19 +369,13 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
                 onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "rgba(255, 255, 255, 0.045)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}>
                 <td className="px-4 py-3">
-                  <div className="h-10 w-14 overflow-hidden rounded-md border border-white/10 bg-white/[0.04]">
-                    {item.imagemUrl ? (
-                      <div
-                        className="h-full w-full bg-cover bg-center"
-                        style={{ backgroundImage: `url(${item.imagemUrl})` }}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">Sem imagem</div>
-                    )}
-                  </div>
+                  <ImagePreview url={item.imagemUrl} label={`Foto do tecido ${item.nome}`} />
                 </td>
                 <td className="px-4 py-3 font-medium text-foreground">{item.nome}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{item.descricaoSensorial}</td>
+                <td className="px-4 py-3">
+                  <ColorChips colors={item.coresDisponiveis} />
+                </td>
                 <td className="px-4 py-3">
                   <Badge className={cn("text-xs border", item.ativo ? "bg-[#39d98a]/15 text-[#39d98a] border-[#39d98a]/20" : "bg-muted text-muted-foreground border-border")}>
                     {item.ativo ? "Ativo" : "Inativo"}
@@ -317,7 +391,7 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
               </tr>
             ))}
             {items.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">Nenhum tecido cadastrado.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Nenhum tecido cadastrado.</td></tr>
             )}
           </tbody>
         </table>
@@ -338,9 +412,24 @@ export function TecidosCrud({ initialTecidos }: { initialTecidos: TecidoRow[] })
                 className="resize-none" rows={3} />
             </div>
             <div className="space-y-1.5">
-              <Label>URL da imagem de referência</Label>
+              <Label>Foto do tecido</Label>
               <Input value={form.imagemUrl} onChange={(e) => setForm((f) => ({ ...f, imagemUrl: e.target.value }))} placeholder="https://..."
                 style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.11)" }} />
+              {form.imagemUrl && (
+                <div className="mt-2 overflow-hidden rounded-xl border border-white/10 bg-white/[0.04]">
+                  <div className="h-36 bg-cover bg-center" style={{ backgroundImage: `url(${form.imagemUrl})` }} />
+                </div>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Cores disponiveis</Label>
+              <Input
+                value={form.coresDisponiveis}
+                onChange={(e) => setForm((f) => ({ ...f, coresDisponiveis: e.target.value }))}
+                placeholder="Branco, Preto, Azul, Verde..."
+                style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.11)" }}
+              />
+              <ColorChips colors={parseList(form.coresDisponiveis)} />
             </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.ativo} onCheckedChange={(v) => setForm((f) => ({ ...f, ativo: v }))} />
@@ -441,7 +530,7 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
         <table className="w-full text-sm">
           <thead>
             <tr style={{ background: "rgba(255, 255, 255, 0.06)", borderBottom: "1px solid rgba(255, 255, 255, 0.10)" }}>
-              {["Categoria", "Imagem", "Nome", "Descrição", "Status", "Ações"].map((h, i) => (
+              {["Categoria", "Foto", "Nome", "Descricao", "Status", "Acoes"].map((h, i) => (
                 <th key={h} className={cn("px-4 py-3", i === 5 ? "text-right" : "text-left")} style={thStyle}>{h}</th>
               ))}
             </tr>
@@ -459,16 +548,7 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="h-10 w-14 overflow-hidden rounded-md border border-white/10 bg-white/[0.04]">
-                    {item.imagemUrl ? (
-                      <div
-                        className="h-full w-full bg-cover bg-center"
-                        style={{ backgroundImage: `url(${item.imagemUrl})` }}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">Sem imagem</div>
-                    )}
-                  </div>
+                  <ImagePreview url={item.imagemUrl} label={`Foto do acabamento ${item.nome}`} />
                 </td>
                 <td className="px-4 py-3 font-medium text-foreground">{item.nome}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{item.descricao}</td>
@@ -517,9 +597,14 @@ export function AtributosCrud({ initialAtributos }: { initialAtributos: Atributo
                 className="resize-none" rows={3} />
             </div>
             <div className="space-y-1.5">
-              <Label>URL da imagem de referência</Label>
+              <Label>Foto do acabamento</Label>
               <Input value={form.imagemUrl} onChange={(e) => setForm((f) => ({ ...f, imagemUrl: e.target.value }))} placeholder="https://..."
                 style={{ background: "rgba(255, 255, 255, 0.06)", border: "1px solid rgba(255, 255, 255, 0.11)" }} />
+              {form.imagemUrl && (
+                <div className="mt-2 overflow-hidden rounded-xl border border-white/10 bg-white/[0.04]">
+                  <div className="h-36 bg-cover bg-center" style={{ backgroundImage: `url(${form.imagemUrl})` }} />
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.ativo} onCheckedChange={(v) => setForm((f) => ({ ...f, ativo: v }))} />
