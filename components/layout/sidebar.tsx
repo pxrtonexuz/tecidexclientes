@@ -32,6 +32,7 @@ const navItems: NavItem[] = [
     label: "CRM",
     icon: Users,
     children: [
+      { label: "Conversas", href: "/crm/conversas" },
       { label: "Kanban", href: "/crm/kanban" },
       { label: "Lista de Leads", href: "/crm/leads" },
     ],

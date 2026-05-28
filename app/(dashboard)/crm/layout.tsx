@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const tabs = [
+  { label: "Conversas", href: "/crm/conversas" },
   { label: "Kanban", href: "/crm/kanban" },
   { label: "Lista de Leads", href: "/crm/leads" },
 ];
