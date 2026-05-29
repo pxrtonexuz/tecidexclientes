@@ -15,6 +15,7 @@ import {
   ChevronRight,
   LogOut,
   ChevronDown,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -218,10 +219,26 @@ function NavSection({
   );
 }
 
-export function Sidebar({ companyName, userEmail }: { companyName?: string; userEmail?: string }) {
+export function Sidebar({
+  companyName,
+  userEmail,
+  preferredName,
+  fullName,
+  accessRole,
+  avatarUrl,
+}: {
+  companyName?: string;
+  userEmail?: string;
+  preferredName?: string;
+  fullName?: string;
+  accessRole?: string;
+  avatarUrl?: string;
+}) {
   const [collapsed, setCollapsed] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
+  const displayName = preferredName || fullName || companyName || userEmail || "Usuario";
+  const role = accessRole || "Admin";
 
   async function handleLogout() {
     const supabase = createClient();
@@ -285,19 +302,34 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
       <div className="px-3 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid rgba(35, 39, 57, 0.72)" }}>
         {collapsed ? (
           <TooltipProvider delay={0}>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center justify-center p-2 rounded-[10px] text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer transition-all duration-180"
-                  >
-                    <LogOut className="w-4 h-4 shrink-0" />
-                  </button>
-                }
-              />
-              <TooltipContent side="right"><p>Sair</p></TooltipContent>
-            </Tooltip>
+            <div className="space-y-2">
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Link
+                      href="/perfil"
+                      className="flex h-10 w-full items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.045] hover:text-foreground"
+                    >
+                      <SlidersHorizontal className="w-4 h-4 shrink-0" />
+                    </Link>
+                  }
+                />
+                <TooltipContent side="right"><p>Configuracoes</p></TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center justify-center p-2 rounded-[10px] text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer transition-all duration-180"
+                    >
+                      <LogOut className="w-4 h-4 shrink-0" />
+                    </button>
+                  }
+                />
+                <TooltipContent side="right"><p>Sair</p></TooltipContent>
+              </Tooltip>
+            </div>
           </TooltipProvider>
         ) : (
           <>
@@ -305,23 +337,43 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
             <div className="flex items-center gap-3">
               {/* Avatar */}
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-sm font-semibold"
+                className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-sm font-semibold"
                 style={{
                   background: "rgba(255, 255, 255, 0.11)",
                   border: "1px solid rgba(16, 185, 129, 0.24)",
                   color: "#6ee7b7",
                 }}
               >
-                {(companyName ?? userEmail ?? "U").charAt(0).toUpperCase()}
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                ) : (
+                  displayName.charAt(0).toUpperCase()
+                )}
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate leading-tight">
-                  {companyName ?? "Usuário"}
+                  {displayName}
                 </p>
                 <p className="text-xs text-muted-foreground truncate leading-tight mt-0.5">
-                  Admin
+                  {role}
                 </p>
               </div>
+              <TooltipProvider delay={0}>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Link
+                        href="/perfil"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.055] hover:text-foreground"
+                      >
+                        <SlidersHorizontal className="h-4 w-4" />
+                      </Link>
+                    }
+                  />
+                  <TooltipContent side="top"><p>Configuracoes</p></TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
 
             {/* Logout */}

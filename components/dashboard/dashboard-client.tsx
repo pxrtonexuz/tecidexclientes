@@ -31,9 +31,17 @@ const CLOSED_STATUSES = ["pedido_fechado", "venda_concluida"];
 type Props = {
   agentAtivo: boolean;
   leads: LeadRow[];
+  preferredName: string;
 };
 
-export function DashboardClient({ agentAtivo, leads }: Props) {
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Bom dia";
+  if (hour < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
+export function DashboardClient({ agentAtivo, leads, preferredName }: Props) {
   const [period, setPeriod] = useState<Period>({
     label: "Este mes",
     from: startOfMonth(new Date()),
@@ -78,6 +86,7 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
 
   const chartXInterval = Math.max(0, Math.floor(chartData.length / 7) - 1);
   const todayLabel = format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR });
+  const greeting = getGreeting();
 
   return (
     <div className="tec-page space-y-5">
@@ -88,32 +97,21 @@ export function DashboardClient({ agentAtivo, leads }: Props) {
             "radial-gradient(circle at 92% 40%, rgba(16,185,129,0.18), transparent 24rem), linear-gradient(135deg, rgba(13,16,31,0.96), rgba(7,10,18,0.96))",
         }}
       >
-        <div className="grid items-center gap-5 xl:grid-cols-[minmax(0,1fr)_520px]">
+        <div className="max-w-4xl">
           <div>
             <div className="mb-3 flex items-center gap-2 text-xs font-semibold capitalize text-[#6ee7b7]">
               <Sparkles className="h-3.5 w-3.5" />
               {todayLabel}
             </div>
             <h1 className="max-w-4xl text-[1.875rem] font-semibold leading-[1.1] text-foreground lg:text-4xl">
-              Bom dia, Tecidex. <span className="text-[#6ee7b7]">Tudo sob controle.</span>
+              {greeting}, {preferredName}.{" "}
+              <span className="bg-gradient-to-r from-[#fef7ec] via-[#6ee7b7] to-[#10b981] bg-clip-text text-transparent">
+                Tudo sob controle.
+              </span>
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Uma visao rapida do atendimento, funil comercial e resultados que mostram o pulso da operacao.
+            <p className="mt-3 max-w-2xl text-sm leading-5 text-muted-foreground">
+              Uma visao rapida do que precisa de acao hoje e dos numeros que mostram o pulso da empresa.
             </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              ["Leads no periodo", totalLeads],
-              ["Pedidos", pedidosConfirmados],
-              ["Conversao", `${taxaConversao.toFixed(1)}%`],
-              ["Faturamento", faturamento > 0 ? `R$ ${faturamento.toLocaleString("pt-BR")}` : "R$ 0"],
-            ].map(([label, value]) => (
-              <div key={label} className="min-h-[82px] rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2.5">
-                <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
-                <p className="mt-3 text-lg font-semibold text-foreground">{value}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
