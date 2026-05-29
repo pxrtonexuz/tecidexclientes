@@ -59,7 +59,9 @@ export function ProfileSettings({
         return;
       }
 
+      window.localStorage.setItem("tecidex.preferredName", form.preferredName.trim() || form.fullName.trim() || email);
       toast.success("Perfil atualizado.");
+      await supabase.auth.refreshSession();
       router.refresh();
     });
   }
@@ -105,17 +107,13 @@ export function ProfileSettings({
 
         <section className="tec-panel p-5">
           <p className="tec-section-title text-[#6ee7b7]">Minha conta</p>
-          <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
+          <div className="mt-2">
             <div>
               <h1 className="text-2xl font-semibold text-foreground">Configuracoes do perfil</h1>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Essas informacoes alimentam a sidebar e a saudacao da tela Inicio.
               </p>
             </div>
-            <Button type="button" onClick={saveProfile} disabled={isPending} className="gap-2 bg-[#10b981] hover:bg-[#059669]">
-              <Save className="h-4 w-4" />
-              {isPending ? "Salvando..." : "Salvar alteracoes"}
-            </Button>
           </div>
 
           <div className="mt-8 grid gap-5 md:grid-cols-2">
@@ -137,7 +135,14 @@ export function ProfileSettings({
             </div>
           </div>
 
-          <div className="mt-10 rounded-xl border border-[rgba(35,39,57,0.78)] bg-white/[0.025] p-4">
+          <div className="mt-6 flex justify-end">
+            <Button type="button" onClick={saveProfile} disabled={isPending} className="gap-2 bg-[#10b981] hover:bg-[#059669]">
+              <Save className="h-4 w-4" />
+              {isPending ? "Salvando..." : "Salvar alteracoes"}
+            </Button>
+          </div>
+
+          <div className="mt-6 rounded-xl border border-[rgba(35,39,57,0.78)] bg-white/[0.025] p-4">
             <div className="flex gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#10b981]/10 text-[#6ee7b7]">
                 <ShieldCheck className="h-5 w-5" />

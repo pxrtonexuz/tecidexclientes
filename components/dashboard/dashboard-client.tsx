@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PeriodFilter, type Period } from "@/components/dashboard/period-filter";
 import { StatCard } from "@/components/dashboard/stat-card";
 import {
@@ -42,6 +42,7 @@ function getGreeting() {
 }
 
 export function DashboardClient({ agentAtivo, leads, preferredName }: Props) {
+  const [displayName, setDisplayName] = useState(preferredName);
   const [period, setPeriod] = useState<Period>({
     label: "Este mes",
     from: startOfMonth(new Date()),
@@ -88,6 +89,11 @@ export function DashboardClient({ agentAtivo, leads, preferredName }: Props) {
   const todayLabel = format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR });
   const greeting = getGreeting();
 
+  useEffect(() => {
+    const storedName = window.localStorage.getItem("tecidex.preferredName");
+    if (storedName?.trim()) setDisplayName(storedName.trim());
+  }, []);
+
   return (
     <div className="tec-page space-y-5">
       <section
@@ -104,7 +110,7 @@ export function DashboardClient({ agentAtivo, leads, preferredName }: Props) {
               {todayLabel}
             </div>
             <h1 className="max-w-4xl text-[1.875rem] font-semibold leading-[1.1] text-foreground lg:text-4xl">
-              {greeting}, {preferredName}.{" "}
+              {greeting}, {displayName}.{" "}
               <span className="bg-gradient-to-r from-[#fef7ec] via-[#6ee7b7] to-[#10b981] bg-clip-text text-transparent">
                 Tudo sob controle.
               </span>

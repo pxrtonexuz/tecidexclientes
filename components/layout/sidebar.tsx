@@ -333,9 +333,7 @@ export function Sidebar({
           </TooltipProvider>
         ) : (
           <>
-            {/* User info row */}
-            <div className="flex items-center gap-3">
-              {/* Avatar */}
+            <div className="flex items-center gap-3 rounded-lg border border-[rgba(35,39,57,0.72)] bg-white/[0.025] p-2">
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-sm font-semibold"
                 style={{
@@ -351,7 +349,7 @@ export function Sidebar({
                   displayName.charAt(0).toUpperCase()
                 )}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground truncate leading-tight">
                   {displayName}
                 </p>
@@ -376,7 +374,6 @@ export function Sidebar({
               </TooltipProvider>
             </div>
 
-            {/* Logout */}
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer transition-colors duration-180"
