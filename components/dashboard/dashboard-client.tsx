@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { PeriodFilter, type Period } from "@/components/dashboard/period-filter";
+import type { Period } from "@/components/dashboard/period-filter";
 import { StatCard } from "@/components/dashboard/stat-card";
 import {
   Area,
@@ -43,7 +43,7 @@ function getGreeting() {
 
 export function DashboardClient({ agentAtivo, leads, preferredName }: Props) {
   const [displayName, setDisplayName] = useState(preferredName);
-  const [period, setPeriod] = useState<Period>({
+  const [period] = useState<Period>({
     label: "Este mes",
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
@@ -129,7 +129,6 @@ export function DashboardClient({ agentAtivo, leads, preferredName }: Props) {
           </span>
           <p className="text-sm font-medium text-muted-foreground">Inicio operacional da Tecidex</p>
         </div>
-        <PeriodFilter onChange={setPeriod} />
       </div>
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-4">
