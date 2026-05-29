@@ -44,8 +44,8 @@ const columns: {
 }[] = [
   { id: "em_atendimento",  label: "Em atendimento",  accent: "#38bdf8", glow: "rgba(56, 189, 248, 0.18)" },
   { id: "montando_pedido", label: "Montando pedido", accent: "#818cf8", glow: "rgba(129, 140, 248, 0.18)" },
-  { id: "pedido_fechado",  label: "Pedido fechado",  accent: "#34d582", glow: "rgba(57, 217, 138, 0.25)" },
-  { id: "venda_concluida", label: "Venda concluída", accent: "#34d582", glow: "rgba(57, 217, 138, 0.3)" },
+  { id: "pedido_fechado",  label: "Pedido fechado",  accent: "#6ee7b7", glow: "rgba(16, 185, 129, 0.25)" },
+  { id: "venda_concluida", label: "Venda concluída", accent: "#6ee7b7", glow: "rgba(16, 185, 129, 0.3)" },
   { id: "sem_resposta",    label: "Sem resposta",    accent: "#f59e0b", glow: "rgba(245, 158, 11, 0.18)" },
   { id: "perdido",         label: "Perdido",         accent: "#ef4444", glow: "rgba(239, 68, 68, 0.18)" },
 ];
@@ -93,7 +93,7 @@ function LeadCard({ lead, isDragging }: { lead: Lead; isDragging?: boolean }) {
         {lead.value && (
           <span
             className="text-xs font-semibold shrink-0"
-            style={{ color: "#34d582", textShadow: "0 0 8px rgba(57,217,138,0.4)" }}
+            style={{ color: "#6ee7b7", textShadow: "0 0 8px rgba(57,217,138,0.4)" }}
           >
             R$ {lead.value.toLocaleString("pt-BR")}
           </span>
@@ -135,7 +135,7 @@ function DroppableColumnBody({
         WebkitBackdropFilter: "blur(12px)",
         border: "1px solid rgba(255, 255, 255, 0.085)",
         borderTop: "none",
-        boxShadow: "inset 0 1px 0 rgba(57, 217, 138, 0.04)",
+        boxShadow: "inset 0 1px 0 rgba(16, 185, 129, 0.04)",
         transition: "background 150ms",
       }}
     >
@@ -144,7 +144,7 @@ function DroppableColumnBody({
         <div
           className="h-24 flex items-center justify-center text-xs text-muted-foreground rounded-xl"
           style={{
-            border: `2px dashed ${isOver ? "rgba(57, 217, 138, 0.36)" : "rgba(255, 255, 255, 0.10)"}`,
+            border: `2px dashed ${isOver ? "rgba(16, 185, 129, 0.36)" : "rgba(255, 255, 255, 0.10)"}`,
             transition: "border-color 150ms",
           }}
         >

@@ -16,17 +16,17 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
   const isNeutral = change === 0;
 
   return (
-    <div className="glass-card p-5 flex min-h-[144px] flex-col justify-between gap-4">
+    <div className="glass-card p-4 flex min-h-[140px] flex-col justify-between gap-4">
       <div className="flex items-start justify-between relative z-[1]">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground leading-tight">
           {title}
         </p>
         {icon && (
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#34d582] shrink-0"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6ee7b7] shrink-0"
             style={{
-              background: "rgba(52, 213, 130, 0.085)",
-              border: "1px solid rgba(52, 213, 130, 0.18)",
+              background: "rgba(16, 185, 129, 0.10)",
+              border: "1px solid rgba(16, 185, 129, 0.20)",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
             }}
           >
@@ -39,14 +39,14 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
         <div>
           <span
             className={cn(
-              "text-[1.75rem] font-bold leading-none tracking-normal",
-              highlight === "success" && "text-[#34d582]",
+              "text-2xl font-semibold leading-none tracking-normal",
+              highlight === "success" && "text-[#6ee7b7]",
               highlight === "danger" && "text-destructive",
               !highlight && "text-foreground"
             )}
             style={
               highlight === "success"
-                ? { textShadow: "0 0 12px rgba(52, 213, 130, 0.34)" }
+                ? { textShadow: "0 0 12px rgba(16, 185, 129, 0.28)" }
                 : undefined
             }
           >
@@ -62,14 +62,14 @@ export function StatCard({ title, value, change, suffix, icon, highlight }: Stat
               isNeutral
                 ? "text-muted-foreground"
                 : isPositive
-                ? "text-[#34d582]"
+                ? "text-[#6ee7b7]"
                 : "text-red-400"
             )}
             style={
               isNeutral
                 ? { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }
                 : isPositive
-                ? { background: "rgba(52, 213, 130, 0.11)", border: "1px solid rgba(52, 213, 130, 0.24)" }
+                ? { background: "rgba(16, 185, 129, 0.11)", border: "1px solid rgba(16, 185, 129, 0.24)" }
                 : { background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.25)" }
             }
           >

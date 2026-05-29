@@ -10,9 +10,9 @@ function heatColor(value: number, maxValue: number) {
   if (value === 0 || maxValue === 0) return "rgba(255, 255, 255, 0.04)";
   const ratio = value / maxValue;
   if (ratio < 0.2) return "rgba(255, 255, 255, 0.09)";
-  if (ratio < 0.4) return "rgba(57, 217, 138, 0.28)";
-  if (ratio < 0.65) return "rgba(57, 217, 138, 0.50)";
-  return "rgba(57, 217, 138, 0.80)";
+  if (ratio < 0.4) return "rgba(16, 185, 129, 0.28)";
+  if (ratio < 0.65) return "rgba(16, 185, 129, 0.50)";
+  return "rgba(16, 185, 129, 0.80)";
 }
 
 function EmptyCard({ title, reason }: { title: string; reason: string }) {
@@ -31,7 +31,7 @@ export function AtendimentoClient({ data }: { data: AtendimentoData }) {
       <div className="tec-panel p-5">
         <p className="text-sm font-semibold text-foreground mb-1">
           Mapa de calor — Hora × Dia da semana{" "}
-          <span className="text-xs font-normal text-[#34d582] ml-1">• dados reais</span>
+          <span className="text-xs font-normal text-[#6ee7b7] ml-1">• dados reais</span>
         </p>
         <p className="text-xs text-muted-foreground mb-4">
           Baseado no horário de entrada dos leads ({data.totalLeads} total)
@@ -88,7 +88,7 @@ export function AtendimentoClient({ data }: { data: AtendimentoData }) {
                 <div
                   key={i}
                   className="w-4 h-4 rounded-sm"
-                  style={{ background: `rgba(57, 217, 138, ${opacity})`, border: "1px solid rgba(255, 255, 255, 0.09)" }}
+                  style={{ background: `rgba(16, 185, 129, ${opacity})`, border: "1px solid rgba(255, 255, 255, 0.09)" }}
                 />
               ))}
               <span className="text-xs text-muted-foreground">Mais</span>

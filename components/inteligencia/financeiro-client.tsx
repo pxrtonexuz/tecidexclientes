@@ -15,7 +15,7 @@ import type { FinanceiroData } from "@/app/actions/inteligencia";
 
 const tooltipStyle = {
   backgroundColor: "rgba(5, 12, 8, 0.92)",
-  border: "1px solid rgba(57, 217, 138, 0.28)",
+  border: "1px solid rgba(16, 185, 129, 0.28)",
   borderRadius: "12px",
   fontSize: 12,
   backdropFilter: "blur(20px)",
@@ -48,7 +48,7 @@ export function FinanceiroClient({ data }: { data: FinanceiroData }) {
       <div className="tec-panel p-5">
         <p className="text-sm font-semibold text-foreground mb-1">
           Evolução do Ticket Médio{" "}
-          <span className="text-xs font-normal text-[#34d582] ml-1">• dados reais</span>
+          <span className="text-xs font-normal text-[#6ee7b7] ml-1">• dados reais</span>
         </p>
         <p className="text-xs text-muted-foreground mb-4">Últimos 30 dias</p>
         {data.ticketEvolucao.some((d) => d.ticket > 0) ? (
@@ -75,11 +75,11 @@ export function FinanceiroClient({ data }: { data: FinanceiroData }) {
               <Line
                 type="monotone"
                 dataKey="ticket"
-                stroke="#34d582"
+                stroke="#6ee7b7"
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, fill: "#34d582", stroke: "rgba(57, 217, 138, 0.3)", strokeWidth: 4 }}
-                style={{ filter: "drop-shadow(0 0 6px rgba(57, 217, 138, 0.5))" }}
+                activeDot={{ r: 4, fill: "#6ee7b7", stroke: "rgba(16, 185, 129, 0.3)", strokeWidth: 4 }}
+                style={{ filter: "drop-shadow(0 0 6px rgba(16, 185, 129, 0.5))" }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -94,7 +94,7 @@ export function FinanceiroClient({ data }: { data: FinanceiroData }) {
       <div className="tec-panel p-5">
         <p className="text-sm font-semibold text-foreground mb-1">
           Faturamento por Modelo{" "}
-          <span className="text-xs font-normal text-[#34d582] ml-1">• dados reais</span>
+          <span className="text-xs font-normal text-[#6ee7b7] ml-1">• dados reais</span>
         </p>
         {data.faturamentoPorModelo.length > 0 ? (
           <table className="w-full text-sm mt-4">
@@ -126,7 +126,7 @@ export function FinanceiroClient({ data }: { data: FinanceiroData }) {
                 >
                   <td className="py-3 font-medium text-foreground">{r.modelo}</td>
                   <td className="py-3 text-right text-muted-foreground">{r.pedidos}</td>
-                  <td className="py-3 text-right font-semibold" style={{ color: "#34d582" }}>
+                  <td className="py-3 text-right font-semibold" style={{ color: "#6ee7b7" }}>
                     R$ {r.faturamento.toLocaleString("pt-BR")}
                   </td>
                   <td className="py-3 text-right text-muted-foreground">

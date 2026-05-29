@@ -73,7 +73,7 @@ function GaugeSvg({ score }: { score: number }) {
 }
 
 export function HealthGauge({ score, components }: { score: number; components: ScoreComponent[] }) {
-  const status = score <= 40 ? { label: "Crítico", color: "text-red-400" } : score <= 70 ? { label: "Atenção", color: "text-yellow-400" } : { label: "Saudável", color: "text-[#34d582]" };
+  const status = score <= 40 ? { label: "Crítico", color: "text-red-400" } : score <= 70 ? { label: "Atenção", color: "text-yellow-400" } : { label: "Saudável", color: "text-[#6ee7b7]" };
 
   return (
     <div className="tec-panel p-6 space-y-6">
@@ -86,7 +86,7 @@ export function HealthGauge({ score, components }: { score: number; components: 
         <div className="flex-1 space-y-3 w-full">
           {components.map((c) => {
             const pct = (c.score / c.maxScore) * 100;
-            const barColor = pct <= 40 ? "bg-red-500" : pct <= 70 ? "bg-yellow-500" : "bg-[#34d582]";
+            const barColor = pct <= 40 ? "bg-red-500" : pct <= 70 ? "bg-yellow-500" : "bg-[#6ee7b7]";
             return (
               <div key={c.label} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">

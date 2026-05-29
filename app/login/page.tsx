@@ -44,7 +44,7 @@ export default function LoginPage() {
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at 50% 12%, rgba(57, 217, 138, 0.12), transparent 28rem), linear-gradient(180deg, rgba(255,255,255,0.035), transparent 34%)",
+            "radial-gradient(circle at 50% 12%, rgba(16, 185, 129, 0.12), transparent 28rem), linear-gradient(180deg, rgba(255,255,255,0.035), transparent 34%)",
         }}
       />
       <div

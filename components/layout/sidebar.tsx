@@ -64,12 +64,12 @@ const navItems: NavItem[] = [
 
 
 const navItemBase =
-  "flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm font-medium transition-all duration-180 cursor-pointer";
+  "flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-all duration-180 cursor-pointer";
 
 function TecidexMark({ collapsed }: { collapsed: boolean }) {
   if (collapsed) {
     return (
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.025] text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.025] text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
         T
       </div>
     );
@@ -77,10 +77,10 @@ function TecidexMark({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div>
-      <p className="text-[1.32rem] font-medium uppercase tracking-[0.34em] text-white">
+      <p className="text-[1.18rem] font-medium uppercase tracking-[0.34em] text-white drop-shadow-[0_0_18px_rgba(16,185,129,0.18)]">
         Tecidex
       </p>
-      <div className="mt-2 h-px w-16 bg-[#34d582]/70" />
+      <div className="mt-2 h-px w-14 bg-[#10b981]/70" />
     </div>
   );
 }
@@ -104,10 +104,10 @@ function NavSection({
   const router = useRouter();
 
   const activeStyle: React.CSSProperties = {
-    background: "rgba(22, 163, 95, 0.16)",
-    border: "1px solid rgba(52, 213, 130, 0.26)",
+    background: "rgba(16, 185, 129, 0.10)",
+    border: "1px solid rgba(16, 185, 129, 0.23)",
     boxShadow: "0 10px 26px rgba(16, 185, 129, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.055)",
-    color: "#34d582",
+    color: "#6ee7b7",
   };
 
   if (item.href) {
@@ -120,7 +120,7 @@ function NavSection({
               render={
                 <Link
                   href={item.href}
-                  className={cn(navItemBase, "h-12 justify-center", !isActive && "text-muted-foreground hover:text-foreground hover:bg-white/[0.045]")}
+                  className={cn(navItemBase, "justify-center", !isActive && "text-muted-foreground hover:text-foreground hover:bg-white/[0.045]")}
                   style={isActive ? activeStyle : undefined}
                 >
                   <Icon className="w-5 h-5 shrink-0" />
@@ -161,8 +161,8 @@ function NavSection({
                 }}
                 className={cn(
                   navItemBase,
-                  "h-12 justify-center text-muted-foreground hover:text-foreground hover:bg-white/[0.045] w-full",
-                  isActive && "text-[#34d582]"
+                  "justify-center text-muted-foreground hover:text-foreground hover:bg-white/[0.045] w-full",
+                  isActive && "text-[#6ee7b7]"
                 )}
                 style={isActive ? activeStyle : undefined}
               >
@@ -183,7 +183,7 @@ function NavSection({
         className={cn(
           navItemBase,
           "w-full justify-between",
-          isActive ? "text-[#34d582]" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.045]"
+          isActive ? "text-[#6ee7b7]" : "text-muted-foreground hover:text-foreground hover:bg-white/[0.045]"
         )}
       >
         <div className="flex items-center gap-3">
@@ -206,7 +206,7 @@ function NavSection({
                     ? "font-medium"
                     : "text-muted-foreground hover:text-foreground hover:bg-white/[0.045]"
                 )}
-                style={childActive ? { color: "#34d582", background: "rgba(22,163,95,0.16)" } : undefined}
+                style={childActive ? { color: "#6ee7b7", background: "rgba(16,185,129,0.10)" } : undefined}
               >
                 {child.label}
               </Link>
@@ -234,20 +234,20 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
     <aside
       className={cn(
         "relative flex flex-col h-screen transition-all duration-300",
-        collapsed ? "w-[88px]" : "w-[276px]"
+        collapsed ? "w-16" : "w-[244px]"
       )}
       style={{
-        background: "rgba(7, 10, 17, 0.97)",
+        background: "rgba(11, 13, 25, 0.97)",
         backdropFilter: "blur(24px) saturate(135%)",
         WebkitBackdropFilter: "blur(24px) saturate(135%)",
-        borderRight: "1px solid rgba(255, 255, 255, 0.07)",
+        borderRight: "1px solid rgba(35, 39, 57, 0.78)",
         boxShadow: "8px 0 30px rgba(0, 0, 0, 0.24), inset -1px 0 0 rgba(255, 255, 255, 0.025)",
       }}
     >
       {/* Header — Tecidex logo */}
       <div
-        className={cn("flex min-h-[104px] items-center px-6", collapsed ? "justify-center" : "justify-start")}
-        style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.07)" }}
+        className={cn("flex min-h-[88px] items-center px-4", collapsed ? "justify-center" : "justify-start")}
+        style={{ borderBottom: "1px solid rgba(35, 39, 57, 0.72)" }}
       >
         <TecidexMark collapsed={collapsed} />
       </div>
@@ -255,10 +255,10 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
       {/* Toggle button */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-[100px] z-10 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all duration-180 hover:scale-110"
+        className="absolute -right-3 top-[88px] z-10 w-6 h-6 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-180 hover:scale-110"
         style={{
           background: "rgba(10, 14, 22, 0.96)",
-          border: "1px solid rgba(52, 213, 130, 0.24)",
+          border: "1px solid rgba(16, 185, 129, 0.24)",
           boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
         }}
         aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
@@ -269,7 +269,7 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
       </button>
 
       {/* Navigation */}
-      <nav className={cn("flex-1 overflow-y-auto py-5 space-y-2", collapsed ? "px-3" : "px-3")}>
+      <nav className={cn("flex-1 overflow-y-auto py-4 space-y-2", collapsed ? "px-2" : "px-4")}>
         {navItems.map((item) => (
           <NavSection
             key={item.label}
@@ -282,7 +282,7 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
       </nav>
 
       {/* Footer — User section */}
-      <div className="px-3 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid rgba(255, 255, 255, 0.075)" }}>
+      <div className="px-3 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid rgba(35, 39, 57, 0.72)" }}>
         {collapsed ? (
           <TooltipProvider delay={0}>
             <Tooltip>
@@ -308,8 +308,8 @@ export function Sidebar({ companyName, userEmail }: { companyName?: string; user
                 className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-sm font-semibold"
                 style={{
                   background: "rgba(255, 255, 255, 0.11)",
-                  border: "1px solid rgba(57, 217, 138, 0.28)",
-                  color: "#34d582",
+                  border: "1px solid rgba(16, 185, 129, 0.24)",
+                  color: "#6ee7b7",
                 }}
               >
                 {(companyName ?? userEmail ?? "U").charAt(0).toUpperCase()}

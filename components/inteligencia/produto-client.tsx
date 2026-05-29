@@ -13,7 +13,7 @@ import type { ProdutoData } from "@/app/actions/inteligencia";
 
 const tooltipStyle = {
   backgroundColor: "rgba(5, 12, 8, 0.92)",
-  border: "1px solid rgba(57, 217, 138, 0.28)",
+  border: "1px solid rgba(16, 185, 129, 0.28)",
   borderRadius: "12px",
   fontSize: 12,
   backdropFilter: "blur(20px)",
@@ -38,7 +38,7 @@ export function ProdutoClient({ data }: { data: ProdutoData }) {
       <div className="tec-panel p-5">
         <p className="text-sm font-semibold text-foreground mb-4">
           Ranking de Modelos{" "}
-          <span className="text-xs font-normal text-[#34d582] ml-1">• dados reais</span>
+          <span className="text-xs font-normal text-[#6ee7b7] ml-1">• dados reais</span>
         </p>
         {data.modelRanking.length > 0 ? (
           <ResponsiveContainer width="100%" height={Math.max(180, data.modelRanking.length * 36)}>
@@ -64,9 +64,9 @@ export function ProdutoClient({ data }: { data: ProdutoData }) {
               />
               <Bar
                 dataKey="pedidos"
-                fill="#34d582"
+                fill="#6ee7b7"
                 radius={[0, 6, 6, 0]}
-                style={{ filter: "drop-shadow(0 0 6px rgba(57, 217, 138, 0.4))" }}
+                style={{ filter: "drop-shadow(0 0 6px rgba(16, 185, 129, 0.4))" }}
               />
             </BarChart>
           </ResponsiveContainer>
