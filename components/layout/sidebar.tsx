@@ -11,6 +11,8 @@ import {
   BarChart3,
   Package,
   Bot,
+  ClipboardList,
+  UserRound,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -36,6 +38,8 @@ const navItems: NavItem[] = [
       { label: "Lista de Leads", href: "/crm/leads" },
     ],
   },
+  { label: "Clientes", href: "/clientes", icon: UserRound },
+  { label: "Pedidos e Entrega", href: "/pedidos", icon: ClipboardList },
   {
     label: "Inteligência",
     icon: BarChart3,

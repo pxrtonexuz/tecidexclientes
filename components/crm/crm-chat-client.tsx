@@ -41,6 +41,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   updateLeadModelo,
   updateLeadObservacoes,
@@ -49,6 +51,11 @@ import {
   type LeadRow,
 } from "@/app/actions/leads";
 import { pausarConversaIA, reativarConversaIA, type ConversaData } from "@/app/actions/agente";
+import {
+  findClienteByPhone,
+  generatePedidoFromCrm,
+  type ClienteRow,
+} from "@/app/actions/operacao";
 
 type ConversaStatus = "ativa" | "pausada" | "concluida";
 
@@ -141,6 +148,11 @@ function formatLastMessage(conv?: LocalConversa) {
 function moneyLabel(value: number | null | undefined) {
   if (!value) return "R$ 0";
   return `R$ ${value.toLocaleString("pt-BR")}`;
+}
+
+function parseMoney(value: string) {
+  const parsed = Number(value.replace(/[^\d.,]/g, "").replace(",", "."));
+  return Number.isNaN(parsed) ? null : parsed;
 }
 
 type CrmContact = {
@@ -608,6 +620,224 @@ function ContextPanel({
   );
 }
 
+function GeneratePedidoDialog({
+  contact,
+  existingCliente,
+  open,
+  onOpenChange,
+  onCreated,
+}: {
+  contact?: CrmContact;
+  existingCliente: ClienteRow | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: () => void;
+}) {
+  const lead = contact?.lead;
+  const [saving, setSaving] = useState(false);
+  const [clienteForm, setClienteForm] = useState({
+    nome: "",
+    telefone: "",
+    empresa_nome: "",
+    tipo_cliente: "pessoa_fisica",
+    cidade: "",
+    uf: "",
+    observacoes: "",
+  });
+  const [pedidoForm, setPedidoForm] = useState({
+    modelo: "",
+    valor: "",
+    observacoes: "",
+  });
+
+  useEffect(() => {
+    if (!open || !contact) return;
+    setClienteForm({
+      nome: existingCliente?.nome ?? lead?.nome ?? contact.title ?? "",
+      telefone: existingCliente?.telefone ?? lead?.telefone ?? contact.phone ?? "",
+      empresa_nome: existingCliente?.empresa_nome ?? "",
+      tipo_cliente: existingCliente?.tipo_cliente ?? "pessoa_fisica",
+      cidade: existingCliente?.cidade ?? "",
+      uf: existingCliente?.uf ?? "",
+      observacoes: existingCliente?.observacoes ?? "",
+    });
+    setPedidoForm({
+      modelo: lead?.modelo ?? "",
+      valor: lead?.valor != null ? String(lead.valor) : "",
+      observacoes: lead?.observacoes ?? "",
+    });
+  }, [contact, existingCliente, lead, open]);
+
+  async function handleSubmit() {
+    if (!contact) return;
+    setSaving(true);
+    const result = await generatePedidoFromCrm({
+      existingClienteId: existingCliente?.id,
+      cliente: existingCliente
+        ? undefined
+        : {
+            nome: clienteForm.nome,
+            telefone: clienteForm.telefone,
+            empresa_nome: clienteForm.empresa_nome || null,
+            tipo_cliente: clienteForm.tipo_cliente,
+            cidade: clienteForm.cidade || null,
+            uf: clienteForm.uf || null,
+            observacoes: clienteForm.observacoes || null,
+          },
+      leadId: lead?.id ?? null,
+      sessionId: contact.conversa?.session_id ?? null,
+      modelo: pedidoForm.modelo || null,
+      valor: parseMoney(pedidoForm.valor),
+      observacoes: pedidoForm.observacoes || null,
+    });
+    setSaving(false);
+
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success(`${result.ordemServico.numero_os} criada para ${result.cliente.nome}.`);
+    onCreated();
+    onOpenChange(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="max-h-[calc(100vh-2rem)] overflow-y-auto text-foreground sm:max-w-2xl"
+        style={{
+          background: "rgba(5, 12, 8, 0.96)",
+          border: "1px solid rgba(16, 185, 129, 0.22)",
+          backdropFilter: "blur(40px)",
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle>
+            {existingCliente
+              ? `Gerar pedido para cliente ${existingCliente.nome}`
+              : "Adicionar novo cliente e gerar pedido"}
+          </DialogTitle>
+          <DialogDescription>
+            O pedido sera vinculado a esta conversa e recebera uma OS. A IA usara apenas o recorte novo do chat.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <section className="space-y-3 rounded-xl border border-white/10 bg-white/[0.035] p-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Cliente</p>
+            <div className="space-y-1.5">
+              <Label>Nome</Label>
+              <Input
+                value={clienteForm.nome}
+                disabled={!!existingCliente}
+                onChange={(event) => setClienteForm((form) => ({ ...form, nome: event.target.value }))}
+                className="border-white/10 bg-white/[0.045]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>WhatsApp</Label>
+              <Input
+                value={clienteForm.telefone}
+                disabled={!!existingCliente}
+                onChange={(event) => setClienteForm((form) => ({ ...form, telefone: event.target.value }))}
+                className="border-white/10 bg-white/[0.045]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Empresa/time</Label>
+              <Input
+                value={clienteForm.empresa_nome}
+                disabled={!!existingCliente}
+                onChange={(event) => setClienteForm((form) => ({ ...form, empresa_nome: event.target.value }))}
+                className="border-white/10 bg-white/[0.045]"
+              />
+            </div>
+            <div className="grid grid-cols-[1fr_88px] gap-2">
+              <div className="space-y-1.5">
+                <Label>Cidade</Label>
+                <Input
+                  value={clienteForm.cidade}
+                  disabled={!!existingCliente}
+                  onChange={(event) => setClienteForm((form) => ({ ...form, cidade: event.target.value }))}
+                  className="border-white/10 bg-white/[0.045]"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>UF</Label>
+                <Input
+                  value={clienteForm.uf}
+                  disabled={!!existingCliente}
+                  maxLength={2}
+                  onChange={(event) => setClienteForm((form) => ({ ...form, uf: event.target.value.toUpperCase() }))}
+                  className="border-white/10 bg-white/[0.045]"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Tipo</Label>
+              <select
+                value={clienteForm.tipo_cliente}
+                disabled={!!existingCliente}
+                onChange={(event) => setClienteForm((form) => ({ ...form, tipo_cliente: event.target.value }))}
+                className="h-9 w-full rounded-lg border border-white/10 bg-white/[0.045] px-3 text-sm text-foreground"
+              >
+                <option value="pessoa_fisica">Pessoa fisica</option>
+                <option value="empresa">Empresa</option>
+                <option value="time">Time</option>
+                <option value="escola">Escola</option>
+                <option value="revendedor">Revendedor</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+          </section>
+
+          <section className="space-y-3 rounded-xl border border-white/10 bg-white/[0.035] p-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Pedido inicial</p>
+            <div className="space-y-1.5">
+              <Label>Modelo/interesse</Label>
+              <Input
+                value={pedidoForm.modelo}
+                onChange={(event) => setPedidoForm((form) => ({ ...form, modelo: event.target.value }))}
+                className="border-white/10 bg-white/[0.045]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Valor</Label>
+              <Input
+                value={pedidoForm.valor}
+                onChange={(event) => setPedidoForm((form) => ({ ...form, valor: event.target.value }))}
+                placeholder="R$ 0,00"
+                className="border-white/10 bg-white/[0.045]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Observacoes do pedido</Label>
+              <Textarea
+                value={pedidoForm.observacoes}
+                onChange={(event) => setPedidoForm((form) => ({ ...form, observacoes: event.target.value }))}
+                className="min-h-32 resize-none border-white/10 bg-white/[0.045]"
+              />
+            </div>
+            <div className="rounded-lg border border-[#6ee7b7]/20 bg-[#6ee7b7]/10 p-3 text-xs leading-5 text-[#c6f6d5]">
+              Recorte protegido: se este cliente ja tiver pedidos anteriores nesta conversa, a OS usa apenas mensagens novas depois do ultimo pedido gerado.
+            </div>
+          </section>
+        </div>
+
+        <DialogFooter className="border-white/10 bg-white/[0.035]">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} disabled={saving || !clienteForm.nome || !clienteForm.telefone}>
+            {saving ? "Gerando..." : "Criar pedido e OS"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenantAnonKey }: Props) {
   const [leads, setLeads] = useState(initialLeads);
   const [conversas, setConversas] = useState<LocalConversa[]>(
@@ -618,6 +848,9 @@ export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenan
   const [infoContact, setInfoContact] = useState<CrmContact | undefined>();
   const [search, setSearch] = useState("");
   const [pausing, setPausing] = useState<string | null>(null);
+  const [pedidoContact, setPedidoContact] = useState<CrmContact | undefined>();
+  const [pedidoCliente, setPedidoCliente] = useState<ClienteRow | null>(null);
+  const [pedidoDialogOpen, setPedidoDialogOpen] = useState(false);
   const [realtimeOk, setRealtimeOk] = useState(false);
   const [, startTransition] = useTransition();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
@@ -722,6 +955,16 @@ export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenan
     setLeads((prev) => prev.map((lead) => (lead.id === id ? { ...lead, ...patch } : lead)));
   }
 
+  async function openPedidoDialog(contact: CrmContact) {
+    setPedidoContact(contact);
+    setPedidoCliente(null);
+    setPedidoDialogOpen(true);
+    const phone = contact.lead?.telefone || contact.phone;
+    if (!phone) return;
+    const cliente = await findClienteByPhone(phone);
+    setPedidoCliente(cliente);
+  }
+
   function handleStatusChange(value: string | null) {
     if (!selected?.lead || !value || !isLeadStatus(value)) return;
     const previous = selected.lead.status;
@@ -733,6 +976,9 @@ export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenan
         toast.error(res.error);
       }
     });
+    if (value === "venda_concluida") {
+      openPedidoDialog(selected);
+    }
   }
 
   function updateContactStage(contact: CrmContact, stage: LeadStatus) {
@@ -751,6 +997,9 @@ export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenan
         toast.error(res.error);
       }
     });
+    if (stage === "venda_concluida") {
+      openPedidoDialog(contact);
+    }
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -906,6 +1155,13 @@ export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenan
       </DndContext>
 
       <ContactInfoSheet contact={infoContact} open={!!infoContact} onOpenChange={(open) => !open && setInfoContact(undefined)} />
+      <GeneratePedidoDialog
+        contact={pedidoContact}
+        existingCliente={pedidoCliente}
+        open={pedidoDialogOpen}
+        onOpenChange={setPedidoDialogOpen}
+        onCreated={() => setPedidoContact(undefined)}
+      />
     </div>
   );
 }
