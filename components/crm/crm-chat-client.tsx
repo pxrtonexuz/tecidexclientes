@@ -220,16 +220,11 @@ function ConnectionPanel({
             {qrCode}
           </div>
         ) : (
-          <div className="grid h-32 w-32 grid-cols-5 gap-1 rounded-lg border border-white/10 bg-white p-2">
-            {Array.from({ length: 25 }, (_, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "rounded-[2px]",
-                  [0, 1, 2, 5, 10, 12, 14, 17, 19, 20, 21, 22, 24].includes(index) ? "bg-black" : "bg-transparent"
-                )}
-              />
-            ))}
+          <div className="flex h-32 w-32 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[#6ee7b7]/25 bg-[#6ee7b7]/[0.06] text-[#6ee7b7]">
+            <QrCode className="h-10 w-10" />
+            <span className="px-4 text-center text-xs font-semibold leading-4">
+              QR pendente
+            </span>
           </div>
         )}
       </div>
