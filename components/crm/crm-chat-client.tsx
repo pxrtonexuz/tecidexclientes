@@ -32,6 +32,7 @@ import {
   QrCode,
   RefreshCw,
   Search,
+  Settings2,
   User,
   Wifi,
 } from "lucide-react";
@@ -269,6 +270,45 @@ function ConnectionPanel({
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function CrmOperationHeader({
+  connection,
+  realtimeOk,
+  totalContacts,
+  totalConversas,
+  onOpenSettings,
+}: {
+  connection: WhatsAppConnectionRow | null;
+  realtimeOk: boolean;
+  totalContacts: number;
+  totalConversas: number;
+  onOpenSettings: () => void;
+}) {
+  const connected = connection?.status === "connected";
+
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 md:flex-row md:items-center md:justify-between">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">Operacao comercial</span>
+          <Badge className={cn("border text-[11px]", connected ? "border-[#6ee7b7]/20 bg-[#6ee7b7]/15 text-[#6ee7b7]" : "border-yellow-500/20 bg-yellow-500/15 text-yellow-400")}>
+            WhatsApp {statusLabel(connection?.status).toLowerCase()}
+          </Badge>
+          <Badge className={cn("border text-[11px]", realtimeOk ? "border-[#6ee7b7]/20 bg-[#6ee7b7]/15 text-[#6ee7b7]" : "border-border bg-muted text-muted-foreground")}>
+            {realtimeOk ? "Tempo real ativo" : "Tempo real conectando"}
+          </Badge>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {totalContacts} contatos no funil, {totalConversas} conversas vinculadas.
+        </p>
+      </div>
+      <Button variant="outline" className="w-full gap-2 border-white/10 md:w-auto" onClick={onOpenSettings}>
+        <Settings2 className="h-4 w-4" />
+        Configuracoes
+      </Button>
     </div>
   );
 }
@@ -905,6 +945,7 @@ export function CrmChatClient({ initialLeads, initialConversas, initialWhatsappC
   const [pedidoContact, setPedidoContact] = useState<CrmContact | undefined>();
   const [pedidoCliente, setPedidoCliente] = useState<ClienteRow | null>(null);
   const [pedidoDialogOpen, setPedidoDialogOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [connectionBusy, setConnectionBusy] = useState(false);
   const [realtimeOk, setRealtimeOk] = useState(false);
   const [, startTransition] = useTransition();
@@ -912,17 +953,24 @@ export function CrmChatClient({ initialLeads, initialConversas, initialWhatsappC
 
   const contacts = useMemo<CrmContact[]>(() => {
     const usedConversations = new Set<string>();
-    const leadContacts = leads.map((lead) => {
+    const leadContacts = leads.flatMap((lead) => {
       const conversa = conversas.find((item) => leadMatchesConversation(lead, item));
       if (conversa) usedConversations.add(conversa.session_id);
-      return {
+      const title = lead.nome?.trim() || lead.telefone || "Lead sem nome";
+      const isEmptyPlaceholder =
+        !onlyDigits(lead.telefone).length &&
+        !lead.modelo &&
+        !lead.observacoes &&
+        title.toLowerCase().includes("sem telefone");
+      if (isEmptyPlaceholder) return [];
+      return [{
         id: lead.id,
-        title: lead.nome,
+        title,
         phone: lead.telefone ?? "",
         stage: safeLeadStatus(lead.status),
         lead,
         conversa,
-      };
+      }];
     });
 
     const conversationOnly = conversas
@@ -954,7 +1002,6 @@ export function CrmChatClient({ initialLeads, initialConversas, initialWhatsappC
   const activeDrag = contacts.find((contact) => contact.id === activeDragId);
   const selectedColumn = columns.find((column) => column.id === selected?.stage) ?? columns[0];
   const selectedColumnContacts = filteredContacts.filter((contact) => contact.stage === selectedColumn.id);
-  const connected = conversas.length > 0;
 
   useEffect(() => {
     const db = createClient(tenantUrl, tenantAnonKey);
@@ -1185,13 +1232,12 @@ export function CrmChatClient({ initialLeads, initialConversas, initialWhatsappC
 
   return (
     <div className="space-y-5">
-      <ConnectionPanel
-        connected={connected}
-        realtimeOk={realtimeOk}
+      <CrmOperationHeader
         connection={whatsappConnection}
-        busy={connectionBusy}
-        onConnect={handleConnectWhatsApp}
-        onRefresh={handleRefreshWhatsApp}
+        realtimeOk={realtimeOk}
+        totalContacts={filteredContacts.length}
+        totalConversas={conversas.length}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1256,6 +1302,24 @@ export function CrmChatClient({ initialLeads, initialConversas, initialWhatsappC
       </DndContext>
 
       <ContactInfoSheet contact={infoContact} open={!!infoContact} onOpenChange={(open) => !open && setInfoContact(undefined)} />
+      <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <SheetContent className="border-white/10 bg-[#080b13] text-foreground sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle>Configuracoes do CRM Chat</SheetTitle>
+            <SheetDescription>Canal WhatsApp, status da instancia e tempo real do modulo.</SheetDescription>
+          </SheetHeader>
+          <div className="px-4 pb-4">
+            <ConnectionPanel
+              connected={conversas.length > 0}
+              realtimeOk={realtimeOk}
+              connection={whatsappConnection}
+              busy={connectionBusy}
+              onConnect={handleConnectWhatsApp}
+              onRefresh={handleRefreshWhatsApp}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
       <GeneratePedidoDialog
         contact={pedidoContact}
         existingCliente={pedidoCliente}

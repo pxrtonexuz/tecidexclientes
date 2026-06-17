@@ -67,6 +67,23 @@ type RawMessage = {
   message: { type: "human" | "ai"; content: string };
 };
 
+type ChatConversationRow = {
+  session_id: string;
+  telefone: string | null;
+  nome: string | null;
+  status: "ativa" | "concluida" | "pausada" | string;
+  last_message_at: string | null;
+  last_message_preview: string | null;
+};
+
+type ChatMessageRow = {
+  id: string;
+  session_id: string;
+  sender_type: "cliente" | "agente" | "ia" | "sistema" | string;
+  content: string | null;
+  sent_at: string | null;
+};
+
 export type ConversaData = {
   session_id: string;
   clientName: string;
@@ -91,9 +108,57 @@ function formatClientName(sessionId: string): string {
   return sessionId.split("@")[0];
 }
 
+function toConversaStatus(status: string | null | undefined): "ativa" | "concluida" | "pausada" {
+  if (status === "pausada" || status === "concluida") return status;
+  return "ativa";
+}
+
+async function getStructuredChatConversations(db: ReturnType<typeof createTenantClient>): Promise<ConversaData[] | null> {
+  const conversationsResult = await db
+    .from("chat_conversations")
+    .select("session_id, telefone, nome, status, last_message_at, last_message_preview")
+    .order("last_message_at", { ascending: false, nullsFirst: false })
+    .limit(200);
+
+  if (conversationsResult.error) return null;
+  const conversations = (conversationsResult.data ?? []) as ChatConversationRow[];
+  if (conversations.length === 0) return [];
+
+  const sessionIds = conversations.map((row) => row.session_id);
+  const messagesResult = await db
+    .from("chat_messages")
+    .select("id, session_id, sender_type, content, sent_at")
+    .in("session_id", sessionIds)
+    .order("sent_at", { ascending: true })
+    .limit(1200);
+
+  const messages = (messagesResult.data ?? []) as ChatMessageRow[];
+  const grouped = new Map<string, ChatMessageRow[]>();
+  for (const message of messages) {
+    if (!grouped.has(message.session_id)) grouped.set(message.session_id, []);
+    grouped.get(message.session_id)!.push(message);
+  }
+
+  return conversations.map((conversation) => ({
+    session_id: conversation.session_id,
+    clientName: conversation.nome || formatClientName(conversation.session_id),
+    status: toConversaStatus(conversation.status),
+    lastMessage: conversation.last_message_at,
+    messages: (grouped.get(conversation.session_id) ?? []).map((message) => ({
+      id: message.id,
+      from: message.sender_type === "cliente" ? "cliente" : "agente",
+      text: message.content ?? "",
+      at: message.sent_at,
+    })),
+  }));
+}
+
 export async function getChatConversations(): Promise<ConversaData[]> {
   const { tenant } = await requireTenantSession();
   const db = createTenantClient(tenant);
+
+  const structured = await getStructuredChatConversations(db);
+  if (structured) return structured;
 
   const [histResult, pauseResult] = await Promise.all([
     db
