@@ -25,10 +25,12 @@ import {
   CircleDollarSign,
   Clock,
   Info,
+  Loader2,
   MessageSquare,
   Pause,
   Play,
   QrCode,
+  RefreshCw,
   Search,
   User,
   Wifi,
@@ -56,6 +58,11 @@ import {
   generatePedidoFromCrm,
   type ClienteRow,
 } from "@/app/actions/operacao";
+import {
+  connectWhatsApp,
+  syncWhatsAppStatus,
+  type WhatsAppConnectionRow,
+} from "@/app/actions/whatsapp";
 
 type ConversaStatus = "ativa" | "pausada" | "concluida";
 
@@ -167,18 +174,50 @@ type CrmContact = {
 type Props = {
   initialLeads: LeadRow[];
   initialConversas: ConversaData[];
+  initialWhatsappConnection: WhatsAppConnectionRow | null;
   tenantUrl: string;
   tenantAnonKey: string;
 };
 
-function ConnectionPanel({ connected, realtimeOk }: { connected: boolean; realtimeOk: boolean }) {
+function statusLabel(status?: string | null) {
+  if (status === "connected") return "Conectado";
+  if (status === "connecting") return "Conectando";
+  if (status === "error") return "Erro";
+  return "Desconectado";
+}
+
+function ConnectionPanel({
+  connected,
+  realtimeOk,
+  connection,
+  busy,
+  onConnect,
+  onRefresh,
+}: {
+  connected: boolean;
+  realtimeOk: boolean;
+  connection: WhatsAppConnectionRow | null;
+  busy: boolean;
+  onConnect: () => void;
+  onRefresh: () => void;
+}) {
+  const apiConnected = connection?.status === "connected";
+  const qrCode = connection?.qr_code;
+
   return (
     <div className="grid gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[180px_minmax(0,1fr)]">
       <div className="flex h-44 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
-        {connected ? (
+        {apiConnected ? (
           <div className="flex flex-col items-center gap-2 text-[#6ee7b7]">
             <CheckCircle2 className="h-10 w-10" />
             <span className="text-xs font-semibold uppercase tracking-widest">Conectado</span>
+          </div>
+        ) : qrCode?.startsWith("data:image") ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={qrCode} alt="QR Code para conectar WhatsApp" className="h-36 w-36 rounded-lg bg-white p-2" />
+        ) : qrCode ? (
+          <div className="max-w-36 break-all rounded-lg border border-white/10 bg-white p-3 text-center text-[10px] leading-4 text-black">
+            {qrCode}
           </div>
         ) : (
           <div className="grid h-32 w-32 grid-cols-5 gap-1 rounded-lg border border-white/10 bg-white p-2">
@@ -200,20 +239,39 @@ function ConnectionPanel({ connected, realtimeOk }: { connected: boolean; realti
           <p className="text-sm font-semibold text-foreground">WhatsApp da operacao</p>
         </div>
         <h2 className="text-xl font-semibold text-foreground">
-          {connected ? "Conversas sincronizadas com a plataforma." : "Conecte o WhatsApp para iniciar o CRM Chat."}
+          {apiConnected
+            ? "WhatsApp conectado e pronto para o CRM Chat."
+            : connection?.status === "connecting"
+              ? "Escaneie o QR Code para concluir a conexao."
+              : "Conecte o WhatsApp para iniciar o CRM Chat."}
         </h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          {connected
+          {apiConnected
             ? "O Kanban abaixo organiza os contatos por etapa comercial. Novas mensagens entram em tempo real quando o canal esta inscrito."
-            : "Este bloco ja reserva o lugar do QR Code. Para exibir o QR real, falta plugar o endpoint da instancia WhatsApp/UazAPI ou n8n que retorna status e codigo de conexao."}
+            : "Use o WhatsApp do celular em Aparelhos conectados para ler o QR. Depois clique em atualizar status se a tela nao mudar sozinha."}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Badge className={cn("border", connected ? "border-[#6ee7b7]/20 bg-[#6ee7b7]/15 text-[#6ee7b7]" : "border-yellow-500/20 bg-yellow-500/15 text-yellow-400")}>
-            {connected ? "WhatsApp conectado" : "Aguardando QR real"}
+          <Badge className={cn("border", apiConnected ? "border-[#6ee7b7]/20 bg-[#6ee7b7]/15 text-[#6ee7b7]" : "border-yellow-500/20 bg-yellow-500/15 text-yellow-400")}>
+            {statusLabel(connection?.status)}
           </Badge>
           <Badge className={cn("border", realtimeOk ? "border-[#6ee7b7]/20 bg-[#6ee7b7]/15 text-[#6ee7b7]" : "border-border bg-muted text-muted-foreground")}>
             {realtimeOk ? "Realtime ativo" : "Realtime conectando"}
           </Badge>
+          {connected && (
+            <Badge className="border border-white/10 bg-white/[0.045] text-muted-foreground">
+              {connected ? "Conversas no banco" : "Sem conversas"}
+            </Badge>
+          )}
+        </div>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Button onClick={onConnect} disabled={busy} className="gap-2">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
+            {connection ? "Gerar novo QR" : "Conectar WhatsApp"}
+          </Button>
+          <Button onClick={onRefresh} disabled={busy || !connection} variant="outline" className="gap-2 border-white/10">
+            <RefreshCw className={cn("h-4 w-4", busy && "animate-spin")} />
+            Atualizar status
+          </Button>
         </div>
       </div>
     </div>
@@ -838,11 +896,12 @@ function GeneratePedidoDialog({
   );
 }
 
-export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenantAnonKey }: Props) {
+export function CrmChatClient({ initialLeads, initialConversas, initialWhatsappConnection, tenantUrl, tenantAnonKey }: Props) {
   const [leads, setLeads] = useState(initialLeads);
   const [conversas, setConversas] = useState<LocalConversa[]>(
     initialConversas.map((conversa) => ({ ...conversa, status: conversa.status as ConversaStatus }))
   );
+  const [whatsappConnection, setWhatsappConnection] = useState<WhatsAppConnectionRow | null>(initialWhatsappConnection);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [infoContact, setInfoContact] = useState<CrmContact | undefined>();
@@ -851,6 +910,7 @@ export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenan
   const [pedidoContact, setPedidoContact] = useState<CrmContact | undefined>();
   const [pedidoCliente, setPedidoCliente] = useState<ClienteRow | null>(null);
   const [pedidoDialogOpen, setPedidoDialogOpen] = useState(false);
+  const [connectionBusy, setConnectionBusy] = useState(false);
   const [realtimeOk, setRealtimeOk] = useState(false);
   const [, startTransition] = useTransition();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
@@ -951,8 +1011,47 @@ export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenan
     };
   }, [tenantAnonKey, tenantUrl]);
 
+  useEffect(() => {
+    if (whatsappConnection?.status !== "connecting") return;
+    const interval = window.setInterval(async () => {
+      const result = await syncWhatsAppStatus();
+      if (!("error" in result)) {
+        setWhatsappConnection(result.connection);
+        if (result.connection.status === "connected") {
+          toast.success("WhatsApp conectado.");
+        }
+      }
+    }, 5000);
+    return () => window.clearInterval(interval);
+  }, [whatsappConnection?.status]);
+
   function patchLead(id: string, patch: Partial<LeadRow>) {
     setLeads((prev) => prev.map((lead) => (lead.id === id ? { ...lead, ...patch } : lead)));
+  }
+
+  async function handleConnectWhatsApp() {
+    setConnectionBusy(true);
+    const result = await connectWhatsApp();
+    setConnectionBusy(false);
+    if ("error" in result) {
+      if (result.connection) setWhatsappConnection(result.connection);
+      toast.error(result.error);
+      return;
+    }
+    setWhatsappConnection(result.connection);
+    toast.success(result.connection.status === "connected" ? "WhatsApp conectado." : "QR Code gerado.");
+  }
+
+  async function handleRefreshWhatsApp() {
+    setConnectionBusy(true);
+    const result = await syncWhatsAppStatus();
+    setConnectionBusy(false);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+    setWhatsappConnection(result.connection);
+    if (result.connection.status === "connected") toast.success("WhatsApp conectado.");
   }
 
   async function openPedidoDialog(contact: CrmContact) {
@@ -1091,7 +1190,14 @@ export function CrmChatClient({ initialLeads, initialConversas, tenantUrl, tenan
 
   return (
     <div className="space-y-5">
-      <ConnectionPanel connected={connected} realtimeOk={realtimeOk} />
+      <ConnectionPanel
+        connected={connected}
+        realtimeOk={realtimeOk}
+        connection={whatsappConnection}
+        busy={connectionBusy}
+        onConnect={handleConnectWhatsApp}
+        onRefresh={handleRefreshWhatsApp}
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative w-full sm:max-w-sm">
