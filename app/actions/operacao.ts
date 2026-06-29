@@ -33,6 +33,10 @@ export type PedidoRow = {
   session_id: string | null;
   status_comercial: string;
   status_operacional: string;
+  prioridade?: string | null;
+  prazo_combinado?: string | null;
+  quantidade_total?: number | null;
+  especificacoes?: Record<string, unknown> | null;
   valor: number | null;
   modelo: string | null;
   origem: string;
@@ -52,6 +56,8 @@ export type OrdemServicoRow = {
   status: string;
   pdf_url: string | null;
   resumo_operacional: string | null;
+  detalhes_tecnicos?: Record<string, unknown> | null;
+  pendencias?: string[] | null;
   created_at: string;
   updated_at: string;
 };
@@ -77,6 +83,15 @@ export type GeneratePedidoInput = {
   modelo?: string | null;
   observacoes?: string | null;
 };
+
+const ORDER_OPERATION_STATUSES = new Set([
+  "triagem",
+  "artes",
+  "impressao",
+  "corte",
+  "producao",
+  "finalizado",
+]);
 
 export type GeneratePedidoResult =
   | { error: string }
@@ -190,6 +205,45 @@ export async function getPedidos(): Promise<PedidoRow[]> {
   return (data ?? []) as PedidoRow[];
 }
 
+export async function updatePedidoStatus(pedidoId: string, status: string) {
+  if (!ORDER_OPERATION_STATUSES.has(status)) {
+    return { error: "Etapa operacional invalida." };
+  }
+
+  const { tenant, user } = await requireTenantSession();
+  const db = createTenantClient(tenant);
+
+  const { data: current } = await db
+    .from("pedidos")
+    .select("status_operacional")
+    .eq("id", pedidoId)
+    .maybeSingle();
+
+  const previous = (current?.status_operacional as string | undefined) ?? null;
+  const { error } = await db
+    .from("pedidos")
+    .update({
+      status_operacional: status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", pedidoId);
+
+  if (error) return { error: error.message };
+
+  await db.from("pedido_eventos").insert({
+    pedido_id: pedidoId,
+    actor_user_id: user.id,
+    tipo: "mudanca_etapa_operacional",
+    from_status: previous,
+    to_status: status,
+  });
+
+  revalidatePath("/pedidos");
+  revalidatePath("/clientes");
+
+  return { ok: true };
+}
+
 export async function generatePedidoFromCrm(input: GeneratePedidoInput): Promise<GeneratePedidoResult> {
   const { tenant, user } = await requireTenantSession();
   const db = createTenantClient(tenant);
@@ -256,6 +310,7 @@ export async function generatePedidoFromCrm(input: GeneratePedidoInput): Promise
       cliente_id: cliente.id,
       lead_id: input.leadId || null,
       session_id: input.sessionId || null,
+      status_operacional: "triagem",
       valor: input.valor ?? null,
       modelo: input.modelo || null,
       criado_por: user.id,
