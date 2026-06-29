@@ -21,21 +21,32 @@ import {
   CheckCircle2,
   ClipboardCheck,
   FileText,
+  MessageSquare,
   Paintbrush,
   PackageCheck,
   Ruler,
   Scissors,
   Search,
+  Send,
   Shirt,
+  StepForward,
   UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { updatePedidoStatus, type PedidoRow } from "@/app/actions/operacao";
+import {
+  addPedidoComentario,
+  concluirFasePedido,
+  updatePedidoStatus,
+  type PedidoComentarioRow,
+  type PedidoRow,
+} from "@/app/actions/operacao";
 
 type OperationStatus = "triagem" | "artes" | "impressao" | "corte" | "producao" | "finalizado";
 
@@ -156,6 +167,24 @@ const demoPedido: PedidoRow = {
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
+  comentarios: [
+    {
+      id: "demo-comentario-1",
+      pedido_id: "demo-pedido-terceirao",
+      actor_user_id: null,
+      actor_nome: "Rafa",
+      mensagem: "Cliente confirmou a grade. Falta Fred passar valor e prazo final.",
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: "demo-comentario-2",
+      pedido_id: "demo-pedido-terceirao",
+      actor_user_id: null,
+      actor_nome: "Artes",
+      mensagem: "Antes de iniciar, precisamos confirmar escudo/logo e se tera nomes ou numeros individuais.",
+      created_at: new Date().toISOString(),
+    },
+  ],
 };
 
 function money(value: number | null | undefined) {
@@ -200,6 +229,13 @@ function priorityClass(pedido: PedidoRow) {
 
 function isDemo(pedido: PedidoRow) {
   return pedido.id.startsWith("demo-");
+}
+
+function nextStatus(status: string) {
+  const current = normalizeStatus(status);
+  const index = columns.findIndex((column) => column.id === current);
+  if (index < 0 || index === columns.length - 1) return null;
+  return columns[index + 1];
 }
 
 function DetailRow({ label, value }: { label: string; value?: string | number | null }) {
@@ -340,117 +376,225 @@ function KanbanColumn({
   );
 }
 
-function OsSheet({ pedido, open, onOpenChange }: { pedido?: PedidoRow; open: boolean; onOpenChange: (open: boolean) => void }) {
+function PedidoDialog({
+  pedido,
+  open,
+  sending,
+  advancing,
+  message,
+  onMessageChange,
+  onSendMessage,
+  onAdvance,
+  onOpenChange,
+}: {
+  pedido?: PedidoRow;
+  open: boolean;
+  sending: boolean;
+  advancing: boolean;
+  message: string;
+  onMessageChange: (value: string) => void;
+  onSendMessage: () => void;
+  onAdvance: () => void;
+  onOpenChange: (open: boolean) => void;
+}) {
   const specs = pedido ? readSpecs(pedido) : {};
   const pendencias = pedido?.ordem_servico?.pendencias ?? [];
+  const next = pedido ? nextStatus(pedido.status_operacional) : null;
+  const comments = (pedido?.comentarios ?? []).slice().sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="overflow-y-auto border-white/10 bg-[#080b13] text-foreground sm:max-w-2xl">
-        <SheetHeader>
-          <SheetTitle>{pedido?.ordem_servico?.numero_os ?? "Ordem de servico"}</SheetTitle>
-          <SheetDescription>Ficha tecnica operacional do pedido selecionado.</SheetDescription>
-        </SheetHeader>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[88vh] overflow-hidden border-white/10 bg-[#080b13] p-0 text-foreground sm:max-w-5xl">
         {pedido && (
-          <div className="space-y-5 px-4 pb-5">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex max-h-[88vh] flex-col">
+            <DialogHeader className="border-b border-white/10 px-5 pb-4 pt-5">
+              <div className="flex flex-wrap items-start justify-between gap-4 pr-8">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Pedido</p>
-                  <h3 className="mt-1 text-lg font-semibold text-foreground">{pedido.numero}</h3>
-                  <p className="text-sm text-muted-foreground">{pedido.cliente?.nome ?? "Cliente nao encontrado"}</p>
+                  <DialogTitle className="text-xl font-semibold">{pedido.numero} · {pedido.ordem_servico?.numero_os ?? "OS pendente"}</DialogTitle>
+                  <DialogDescription className="mt-1">
+                    {pedido.cliente?.nome ?? "Cliente nao encontrado"} · {statusMap.get(normalizeStatus(pedido.status_operacional))?.label}
+                  </DialogDescription>
                 </div>
-                <Badge className="border border-[#6ee7b7]/20 bg-[#6ee7b7]/15 text-[#6ee7b7]">
-                  {statusMap.get(normalizeStatus(pedido.status_operacional))?.label}
-                </Badge>
-              </div>
-              <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                <DetailRow label="Produto" value={pedido.modelo || "Camiseta personalizada"} />
-                <DetailRow label="Quantidade" value={pedido.quantidade_total ? `${pedido.quantidade_total} pecas` : "Pendente"} />
-                <DetailRow label="Valor" value={money(pedido.valor)} />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Configuracao da peca</p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <DetailRow label="Finalidade" value={specs.finalidade} />
-                <DetailRow label="Tecido" value={specs.tecido} />
-                <DetailRow label="Gola" value={specs.gola} />
-                <DetailRow label="Manga" value={specs.manga} />
-                <DetailRow label="Punho" value={specs.punho} />
-                <DetailRow label="Escudo/logo" value={specs.escudo} />
-                <DetailRow label="Acabamento" value={specs.acabamento} />
-                <DetailRow label="Arte" value={specs.arte} />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Referencia e grade</p>
-              <p className="mt-3 rounded-lg border border-white/10 bg-white/[0.035] p-3 text-sm leading-6 text-foreground">
-                {specs.referencia_visual ?? "Referencia visual pendente."}
-              </p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <DetailRow label="Cores base" value={specs.cores_base} />
-                <DetailRow label="Cores detalhe" value={specs.cores_detalhe} />
-                <DetailRow label="Grade" value={gradeLabel(specs.grade)} />
-                <DetailRow label="Prazo" value={dueLabel(pedido.prazo_combinado)} />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Personalizacoes</p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <DetailRow label="Nome individual" value={specs.personalizacoes?.nome_individual} />
-                <DetailRow label="Numero individual" value={specs.personalizacoes?.numero_individual} />
-                <DetailRow label="Frase/turma/escola" value={specs.personalizacoes?.frase_turma_escola} />
-                <DetailRow label="Patrocinadores" value={specs.personalizacoes?.patrocinadores} />
-                <DetailRow label="Frente" value={specs.personalizacoes?.frente} />
-                <DetailRow label="Costas" value={specs.personalizacoes?.costas} />
-                <DetailRow label="Manga" value={specs.personalizacoes?.manga} />
-                <DetailRow label="Gola/punho" value={specs.personalizacoes?.gola_punho} />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-yellow-300" />
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Pendencias de triagem</p>
-              </div>
-              <div className="mt-3 space-y-2">
-                {pendencias.length > 0 ? (
-                  pendencias.map((item) => (
-                    <div key={item} className="flex gap-2 rounded-lg border border-yellow-400/15 bg-yellow-500/[0.08] p-3 text-sm text-yellow-100">
-                      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-300" />
-                      <span>{item}</span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex items-center gap-2 rounded-lg border border-[#6ee7b7]/15 bg-[#6ee7b7]/[0.08] p-3 text-sm text-[#6ee7b7]">
-                    <CheckCircle2 className="h-4 w-4" />
-                    OS sem pendencias registradas.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Resumo operacional</p>
-              <p className="mt-3 rounded-lg border border-white/10 bg-white/[0.035] p-3 text-sm leading-6 text-foreground">
-                {pedido.ordem_servico?.resumo_operacional ?? "Resumo operacional pendente."}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button variant="outline" className="gap-2 border-white/10" disabled>
-                  <FileText className="h-4 w-4" />
-                  PDF em breve
+                <Button
+                  onClick={onAdvance}
+                  disabled={advancing || !next || isDemo(pedido)}
+                  className="gap-2"
+                  title={isDemo(pedido) ? "Pedido exemplo nao altera banco" : undefined}
+                >
+                  <StepForward className="h-4 w-4" />
+                  {next ? `Concluir fase: ir para ${next.label}` : "Pedido finalizado"}
                 </Button>
               </div>
-            </div>
+            </DialogHeader>
+
+            <Tabs defaultValue="chat" className="min-h-0 flex-1 gap-0">
+              <div className="border-b border-white/10 px-5 py-3">
+                <TabsList className="bg-white/[0.055]">
+                  <TabsTrigger value="chat" className="gap-2 px-4">
+                    <MessageSquare className="h-4 w-4" />
+                    Chat
+                  </TabsTrigger>
+                  <TabsTrigger value="info" className="gap-2 px-4">
+                    <FileText className="h-4 w-4" />
+                    Informacoes
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="chat" className="min-h-0 overflow-y-auto px-5 py-5">
+                <div className="grid min-h-[32rem] gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+                  <div className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.035]">
+                    <div className="border-b border-white/10 px-4 py-3">
+                      <p className="text-sm font-semibold text-foreground">Conversa interna do pedido</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Recados de producao, arte, corte e atendimento ficam centralizados aqui.</p>
+                    </div>
+                    <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+                      {comments.length > 0 ? (
+                        comments.map((comment) => (
+                          <div key={comment.id} className="rounded-xl border border-white/10 bg-white/[0.045] p-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-semibold text-foreground">{comment.actor_nome || "Colaborador"}</p>
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(comment.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                              </span>
+                            </div>
+                            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{comment.mensagem}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex h-full min-h-48 items-center justify-center rounded-xl border-2 border-dashed border-white/10 px-6 text-center text-sm text-muted-foreground">
+                          Nenhuma mensagem interna ainda.
+                        </div>
+                      )}
+                    </div>
+                    <div className="border-t border-white/10 p-4">
+                      <Textarea
+                        value={message}
+                        onChange={(event) => onMessageChange(event.target.value)}
+                        placeholder="Escreva uma atualizacao para a equipe..."
+                        className="min-h-24 border-white/10 bg-white/[0.045]"
+                        disabled={isDemo(pedido)}
+                      />
+                      <div className="mt-3 flex justify-end">
+                        <Button onClick={onSendMessage} disabled={sending || isDemo(pedido) || !message.trim()} className="gap-2">
+                          <Send className="h-4 w-4" />
+                          Enviar mensagem
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <aside className="space-y-3">
+                    <DetailRow label="Etapa atual" value={statusMap.get(normalizeStatus(pedido.status_operacional))?.label} />
+                    <DetailRow label="Proxima etapa" value={next?.label ?? "Finalizado"} />
+                    <DetailRow label="Pendencias" value={pendencias.length > 0 ? `${pendencias.length} abertas` : "Sem pendencias"} />
+                    <DetailRow label="Prazo" value={dueLabel(pedido.prazo_combinado)} />
+                  </aside>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="info" className="min-h-0 overflow-y-auto px-5 py-5">
+                <div className="space-y-5">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Pedido</p>
+                        <h3 className="mt-1 text-lg font-semibold text-foreground">{pedido.numero}</h3>
+                        <p className="text-sm text-muted-foreground">{pedido.cliente?.nome ?? "Cliente nao encontrado"}</p>
+                      </div>
+                      <Badge className="border border-[#6ee7b7]/20 bg-[#6ee7b7]/15 text-[#6ee7b7]">
+                        {statusMap.get(normalizeStatus(pedido.status_operacional))?.label}
+                      </Badge>
+                    </div>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                      <DetailRow label="Produto" value={pedido.modelo || "Camiseta personalizada"} />
+                      <DetailRow label="Quantidade" value={pedido.quantidade_total ? `${pedido.quantidade_total} pecas` : "Pendente"} />
+                      <DetailRow label="Valor" value={money(pedido.valor)} />
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Configuracao da peca</p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <DetailRow label="Finalidade" value={specs.finalidade} />
+                      <DetailRow label="Tecido" value={specs.tecido} />
+                      <DetailRow label="Gola" value={specs.gola} />
+                      <DetailRow label="Manga" value={specs.manga} />
+                      <DetailRow label="Punho" value={specs.punho} />
+                      <DetailRow label="Escudo/logo" value={specs.escudo} />
+                      <DetailRow label="Acabamento" value={specs.acabamento} />
+                      <DetailRow label="Arte" value={specs.arte} />
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Referencia e grade</p>
+                    <p className="mt-3 rounded-lg border border-white/10 bg-white/[0.035] p-3 text-sm leading-6 text-foreground">
+                      {specs.referencia_visual ?? "Referencia visual pendente."}
+                    </p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <DetailRow label="Cores base" value={specs.cores_base} />
+                      <DetailRow label="Cores detalhe" value={specs.cores_detalhe} />
+                      <DetailRow label="Grade" value={gradeLabel(specs.grade)} />
+                      <DetailRow label="Prazo" value={dueLabel(pedido.prazo_combinado)} />
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Personalizacoes</p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <DetailRow label="Nome individual" value={specs.personalizacoes?.nome_individual} />
+                      <DetailRow label="Numero individual" value={specs.personalizacoes?.numero_individual} />
+                      <DetailRow label="Frase/turma/escola" value={specs.personalizacoes?.frase_turma_escola} />
+                      <DetailRow label="Patrocinadores" value={specs.personalizacoes?.patrocinadores} />
+                      <DetailRow label="Frente" value={specs.personalizacoes?.frente} />
+                      <DetailRow label="Costas" value={specs.personalizacoes?.costas} />
+                      <DetailRow label="Manga" value={specs.personalizacoes?.manga} />
+                      <DetailRow label="Gola/punho" value={specs.personalizacoes?.gola_punho} />
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-yellow-300" />
+                      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Pendencias de triagem</p>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {pendencias.length > 0 ? (
+                        pendencias.map((item) => (
+                          <div key={item} className="flex gap-2 rounded-lg border border-yellow-400/15 bg-yellow-500/[0.08] p-3 text-sm text-yellow-100">
+                            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-300" />
+                            <span>{item}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex items-center gap-2 rounded-lg border border-[#6ee7b7]/15 bg-[#6ee7b7]/[0.08] p-3 text-sm text-[#6ee7b7]">
+                          <CheckCircle2 className="h-4 w-4" />
+                          OS sem pendencias registradas.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Resumo operacional</p>
+                    <p className="mt-3 rounded-lg border border-white/10 bg-white/[0.035] p-3 text-sm leading-6 text-foreground">
+                      {pedido.ordem_servico?.resumo_operacional ?? "Resumo operacional pendente."}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button variant="outline" className="gap-2 border-white/10" disabled>
+                        <FileText className="h-4 w-4" />
+                        PDF em breve
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         )}
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -458,6 +602,9 @@ export function PedidosClient({ initialPedidos }: { initialPedidos: PedidoRow[] 
   const [pedidos, setPedidos] = useState<PedidoRow[]>(initialPedidos.length > 0 ? initialPedidos : [demoPedido]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<PedidoRow | undefined>();
+  const [chatMessage, setChatMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [advancingPhase, setAdvancingPhase] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
@@ -482,6 +629,16 @@ export function PedidosClient({ initialPedidos }: { initialPedidos: PedidoRow[] 
   const totalPendencias = pedidos.reduce((sum, pedido) => sum + (pedido.ordem_servico?.pendencias?.length ?? 0), 0);
   const inProgress = pedidos.filter((pedido) => normalizeStatus(pedido.status_operacional) !== "finalizado").length;
 
+  function patchPedido(pedidoId: string, patch: Partial<PedidoRow>) {
+    setPedidos((prev) => prev.map((item) => (item.id === pedidoId ? { ...item, ...patch } : item)));
+    setSelected((prev) => (prev?.id === pedidoId ? { ...prev, ...patch } : prev));
+  }
+
+  function openPedido(pedido: PedidoRow) {
+    setSelected(pedido);
+    setChatMessage("");
+  }
+
   function handleDragStart(event: DragStartEvent) {
     setActiveId(String(event.active.id));
   }
@@ -498,19 +655,58 @@ export function PedidosClient({ initialPedidos }: { initialPedidos: PedidoRow[] 
     const previous = pedido.status_operacional;
     if (normalizeStatus(previous) === target) return;
 
-    setPedidos((prev) =>
-      prev.map((item) => (item.id === pedidoId ? { ...item, status_operacional: target, updated_at: new Date().toISOString() } : item))
-    );
+    patchPedido(pedidoId, { status_operacional: target, updated_at: new Date().toISOString() });
 
     startTransition(async () => {
       const result = await updatePedidoStatus(pedidoId, target);
       if (result.error) {
-        setPedidos((prev) => prev.map((item) => (item.id === pedidoId ? { ...item, status_operacional: previous } : item)));
+        patchPedido(pedidoId, { status_operacional: previous });
         toast.error(result.error);
         return;
       }
       toast.success(`Pedido movido para ${statusMap.get(target as OperationStatus)?.label}.`);
     });
+  }
+
+  async function handleSendMessage() {
+    if (!selected || isDemo(selected)) return;
+    setSendingMessage(true);
+    const result = await addPedidoComentario(selected.id, chatMessage);
+    setSendingMessage(false);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+
+    const comentario = result.comentario as PedidoComentarioRow;
+    const nextComments = [...(selected.comentarios ?? []), comentario];
+    patchPedido(selected.id, { comentarios: nextComments });
+    setChatMessage("");
+    toast.success("Mensagem adicionada ao pedido.");
+  }
+
+  async function handleAdvancePhase() {
+    if (!selected) return;
+    const next = nextStatus(selected.status_operacional);
+    if (!next) return;
+
+    if (isDemo(selected)) {
+      patchPedido(selected.id, { status_operacional: next.id, updated_at: new Date().toISOString() });
+      toast.success(`Pedido exemplo movido para ${next.label}.`);
+      return;
+    }
+
+    const previous = selected.status_operacional;
+    setAdvancingPhase(true);
+    patchPedido(selected.id, { status_operacional: next.id, updated_at: new Date().toISOString() });
+    const result = await concluirFasePedido(selected.id);
+    setAdvancingPhase(false);
+    if ("error" in result) {
+      patchPedido(selected.id, { status_operacional: previous });
+      toast.error(result.error);
+      return;
+    }
+    toast.success(`Fase concluida. Pedido foi para ${next.label}.`);
   }
 
   return (
@@ -563,7 +759,7 @@ export function PedidosClient({ initialPedidos }: { initialPedidos: PedidoRow[] 
               column={column}
               pedidos={filtered.filter((pedido) => normalizeStatus(pedido.status_operacional) === column.id)}
               selectedId={selected?.id}
-              onOpen={setSelected}
+              onOpen={openPedido}
             />
           ))}
         </div>
@@ -573,7 +769,17 @@ export function PedidosClient({ initialPedidos }: { initialPedidos: PedidoRow[] 
         </DragOverlay>
       </DndContext>
 
-      <OsSheet pedido={selected} open={!!selected} onOpenChange={(open) => !open && setSelected(undefined)} />
+      <PedidoDialog
+        pedido={selected}
+        open={!!selected}
+        sending={sendingMessage}
+        advancing={advancingPhase}
+        message={chatMessage}
+        onMessageChange={setChatMessage}
+        onSendMessage={handleSendMessage}
+        onAdvance={handleAdvancePhase}
+        onOpenChange={(open) => !open && setSelected(undefined)}
+      />
     </div>
   );
 }

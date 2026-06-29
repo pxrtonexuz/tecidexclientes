@@ -47,6 +47,7 @@ export type PedidoRow = {
   updated_at: string;
   cliente?: Pick<ClienteRow, "id" | "nome" | "telefone" | "empresa_nome"> | null;
   ordem_servico?: OrdemServicoRow | null;
+  comentarios?: PedidoComentarioRow[];
 };
 
 export type OrdemServicoRow = {
@@ -60,6 +61,15 @@ export type OrdemServicoRow = {
   pendencias?: string[] | null;
   created_at: string;
   updated_at: string;
+};
+
+export type PedidoComentarioRow = {
+  id: string;
+  pedido_id: string;
+  actor_user_id: string | null;
+  actor_nome: string | null;
+  mensagem: string;
+  created_at: string;
 };
 
 export type ClienteComPedidos = ClienteRow & {
@@ -92,6 +102,8 @@ const ORDER_OPERATION_STATUSES = new Set([
   "producao",
   "finalizado",
 ]);
+
+const ORDER_OPERATION_FLOW = ["triagem", "artes", "impressao", "corte", "producao", "finalizado"] as const;
 
 export type GeneratePedidoResult =
   | { error: string }
@@ -198,11 +210,25 @@ export async function getPedidos(): Promise<PedidoRow[]> {
     .select(`
       *,
       cliente:clientes (id, nome, telefone, empresa_nome),
-      ordem_servico:ordens_servico (*)
+      ordem_servico:ordens_servico (*),
+      comentarios:pedido_colaboracao (*)
     `)
     .order("created_at", { ascending: false });
 
   return (data ?? []) as PedidoRow[];
+}
+
+function nextOperationStatus(status: string) {
+  const normalized = status === "novo" || status === "em_separacao"
+    ? "triagem"
+    : status === "em_producao"
+      ? "producao"
+      : status === "pronto_entrega" || status === "entregue"
+        ? "finalizado"
+        : status;
+  const index = ORDER_OPERATION_FLOW.findIndex((item) => item === normalized);
+  if (index < 0 || index === ORDER_OPERATION_FLOW.length - 1) return null;
+  return ORDER_OPERATION_FLOW[index + 1];
 }
 
 export async function updatePedidoStatus(pedidoId: string, status: string) {
@@ -242,6 +268,83 @@ export async function updatePedidoStatus(pedidoId: string, status: string) {
   revalidatePath("/clientes");
 
   return { ok: true };
+}
+
+export async function concluirFasePedido(pedidoId: string) {
+  const { tenant, user } = await requireTenantSession();
+  const db = createTenantClient(tenant);
+
+  const { data: current, error: currentError } = await db
+    .from("pedidos")
+    .select("status_operacional")
+    .eq("id", pedidoId)
+    .maybeSingle();
+
+  if (currentError || !current) return { error: "Pedido nao encontrado." };
+  const previous = current.status_operacional as string;
+  const next = nextOperationStatus(previous);
+  if (!next) return { error: "Este pedido ja esta na ultima fase." };
+
+  const { error } = await db
+    .from("pedidos")
+    .update({
+      status_operacional: next,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", pedidoId);
+
+  if (error) return { error: error.message };
+
+  await db.from("pedido_eventos").insert({
+    pedido_id: pedidoId,
+    actor_user_id: user.id,
+    tipo: "fase_concluida",
+    from_status: previous,
+    to_status: next,
+  });
+
+  revalidatePath("/pedidos");
+  revalidatePath("/clientes");
+
+  return { ok: true, nextStatus: next };
+}
+
+export async function addPedidoComentario(pedidoId: string, mensagem: string) {
+  const text = mensagem.trim();
+  if (!text) return { error: "Escreva uma mensagem." };
+
+  const { tenant, user } = await requireTenantSession();
+  const db = createTenantClient(tenant);
+  const actorName =
+    typeof user.user_metadata?.display_name === "string"
+      ? user.user_metadata.display_name
+      : typeof user.user_metadata?.full_name === "string"
+        ? user.user_metadata.full_name
+        : user.email ?? "Colaborador";
+
+  const { data, error } = await db
+    .from("pedido_colaboracao")
+    .insert({
+      pedido_id: pedidoId,
+      actor_user_id: user.id,
+      actor_nome: actorName,
+      mensagem: text,
+    })
+    .select("*")
+    .single();
+
+  if (error || !data) return { error: error?.message ?? "Falha ao enviar mensagem." };
+
+  await db.from("pedido_eventos").insert({
+    pedido_id: pedidoId,
+    actor_user_id: user.id,
+    tipo: "comentario_adicionado",
+    metadata: { comentario_id: data.id },
+  });
+
+  revalidatePath("/pedidos");
+
+  return { comentario: data as PedidoComentarioRow };
 }
 
 export async function generatePedidoFromCrm(input: GeneratePedidoInput): Promise<GeneratePedidoResult> {
